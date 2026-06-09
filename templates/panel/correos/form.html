@@ -1,0 +1,148 @@
+{% extends 'panel/base_panel.html' %}
+{% block title %}Envío de Correos{% endblock %}
+{% block nav_correos %}active{% endblock %}
+{% block page_title %}Envío Masivo de Correos{% endblock %}
+
+{% block content %}
+<div class="content-card" style="max-width:750px;">
+    <h6 class="fw-bold mb-4">
+        <i class="fas fa-envelope me-2 text-primary"></i>Enviar correo a grupos de usuarios
+    </h6>
+
+    <form method="post" id="form-correo">
+        {% csrf_token %}
+
+        <!-- Tipo de destinatario -->
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Tipo de destinatario</label>
+            <div class="d-flex gap-3">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="tipo_destinatario" id="tipo_rol" value="rol"
+                        {% if not post_data.tipo_destinatario or post_data.tipo_destinatario == 'rol' %}checked{% endif %}>
+                    <label class="form-check-label" for="tipo_rol">Por rol</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="tipo_destinatario" id="tipo_equipo" value="equipo"
+                        {% if post_data.tipo_destinatario == 'equipo' %}checked{% endif %}>
+                    <label class="form-check-label" for="tipo_equipo">Por equipo</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="tipo_destinatario" id="tipo_categoria" value="categoria"
+                        {% if post_data.tipo_destinatario == 'categoria' %}checked{% endif %}>
+                    <label class="form-check-label" for="tipo_categoria">Por categoría</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Por rol -->
+        <div class="mb-3" id="bloque_rol">
+            <label class="form-label fw-semibold">Destinatarios</label>
+            <select name="destinatario" class="form-select">
+                {% for value, label in roles_opciones %}
+                <option value="{{ value }}" {% if post_data.destinatario == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Por equipo -->
+        <div class="mb-3 d-none" id="bloque_equipo">
+            <label class="form-label fw-semibold">Equipo</label>
+            <select name="equipo_id" class="form-select">
+                <option value="">Seleccionar equipo...</option>
+                {% for equipo in equipos %}
+                <option value="{{ equipo.id }}" {% if post_data.equipo_id == equipo.id|stringformat:"s" %}selected{% endif %}>
+                    {{ equipo.nombre }} — {{ equipo.categoria.nombre }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Por categoría -->
+        <div class="mb-3 d-none" id="bloque_categoria">
+            <label class="form-label fw-semibold">Categoría</label>
+            <select name="categoria_id" class="form-select">
+                <option value="">Seleccionar categoría...</option>
+                {% for cat in categorias %}
+                <option value="{{ cat.id }}" {% if post_data.categoria_id == cat.id|stringformat:"s" %}selected{% endif %}>
+                    {{ cat.nombre }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Asunto</label>
+            <input type="text" name="asunto" class="form-control"
+                   placeholder="Asunto del correo"
+                   value="{{ post_data.asunto|default:'' }}" required>
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label fw-semibold">Mensaje</label>
+            <textarea name="mensaje" id="mensaje" class="form-control" rows="8"
+                      placeholder="Escribe el mensaje aquí..." required>{{ post_data.mensaje|default:'' }}</textarea>
+        </div>
+
+        <!-- Vista previa -->
+        <div class="mb-4 d-none" id="bloque_preview">
+            <label class="form-label fw-semibold text-muted">Vista previa del mensaje</label>
+            <div id="preview_texto" class="border rounded p-3 bg-light" style="white-space:pre-wrap; font-size:0.9rem;"></div>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <button type="button" class="btn btn-outline-secondary" id="btn_preview">
+                <i class="fas fa-eye me-1"></i>Vista previa
+            </button>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-paper-plane me-2"></i>Enviar correos
+            </button>
+            <a href="/admin-dashboard/" class="btn btn-outline-secondary">Cancelar</a>
+            <a href="/panel/correos/usuario/" class="btn btn-outline-primary">
+                <i class="fas fa-user me-1"></i>Envío individual
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    const radios   = document.querySelectorAll('input[name="tipo_destinatario"]');
+    const bloques  = { rol: 'bloque_rol', equipo: 'bloque_equipo', categoria: 'bloque_categoria' };
+
+    function mostrar(tipo) {
+        Object.entries(bloques).forEach(([key, id]) => {
+            document.getElementById(id).classList.toggle('d-none', key !== tipo);
+        });
+    }
+
+    radios.forEach(r => r.addEventListener('change', () => mostrar(r.value)));
+
+    // Restaurar estado inicial desde post_data
+    const seleccionado = document.querySelector('input[name="tipo_destinatario"]:checked');
+    if (seleccionado) mostrar(seleccionado.value);
+
+    // Vista previa
+    const btnPreview   = document.getElementById('btn_preview');
+    const bloquePreview = document.getElementById('bloque_preview');
+    const previewTexto  = document.getElementById('preview_texto');
+    const msgTextarea   = document.getElementById('mensaje');
+
+    btnPreview.addEventListener('click', function () {
+        const texto = msgTextarea.value.trim();
+        if (!texto) { bloquePreview.classList.add('d-none'); return; }
+        previewTexto.textContent = texto;
+        bloquePreview.classList.remove('d-none');
+        previewTexto.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+
+    // Actualizar preview en tiempo real si está visible
+    msgTextarea.addEventListener('input', function () {
+        if (!bloquePreview.classList.contains('d-none')) {
+            previewTexto.textContent = this.value;
+        }
+    });
+})();
+</script>
+{% endblock %}

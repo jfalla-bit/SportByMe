@@ -1,0 +1,191 @@
+{% extends 'panel/base_panel.html' %}
+{% block title %}Usuarios{% endblock %}
+{% block nav_usuarios %}active{% endblock %}
+{% block page_title %}Gestión de Usuarios{% endblock %}
+
+{% block content %}
+<div class="content-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0">
+            <i class="fas fa-users me-2 text-primary"></i>Lista de Usuarios
+        </h6>
+        <a href="/panel/usuarios/crear/" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus me-1"></i>Nuevo Usuario
+        </a>
+    </div>
+
+    <!-- Filtros -->
+    <form method="get" class="row g-2 mb-3 p-3 bg-light rounded">
+        <div class="col-md-4">
+            <input type="text" name="buscar" class="form-control form-control-sm"
+                   placeholder="Buscar por nombre, email, documento o ID..."
+                   value="{{ buscar }}">
+        </div>
+        <div class="col-md-3">
+            <select name="rol" class="form-select form-select-sm">
+                <option value="">Todos los roles</option>
+                {% for value, label in roles %}
+                <option value="{{ value }}" {% if rol == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="estado" class="form-select form-select-sm">
+                <option value="">Todos los estados</option>
+                <option value="activo"   {% if estado == 'activo'   %}selected{% endif %}>Activo</option>
+                <option value="inactivo" {% if estado == 'inactivo' %}selected{% endif %}>Inactivo</option>
+            </select>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-primary btn-sm">
+                <i class="fas fa-search me-1"></i>Filtrar
+            </button>
+            <a href="/panel/usuarios/" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-times me-1"></i>Limpiar
+            </a>
+            <a href="/panel/pdf/usuarios/?buscar={{ buscar }}&rol={{ rol }}&estado={{ estado }}"
+               class="btn btn-outline-danger btn-sm" title="Exportar PDF usuarios">
+                <i class="fas fa-file-pdf"></i>
+            </a>
+            <a href="/panel/pdf/deportistas/?buscar={{ buscar }}&estado={{ estado }}"
+               class="btn btn-outline-primary btn-sm" title="Reporte de Deportistas">
+                <i class="fas fa-running me-1"></i>Reporte Deportistas
+            </a>
+        </div>
+    </form>
+
+    {% if buscar or rol or estado %}
+    <div class="alert alert-info py-2 mb-3">
+        <i class="fas fa-filter me-1"></i>
+        Se encontraron <strong>{{ total_filtrados }}</strong> usuario(s) con los filtros aplicados.
+    </div>
+    {% endif %}
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>ID / Username</th>
+                    <th>Nombre Completo</th>
+                    <th>Email</th>
+                    <th>Documento</th>
+                    <th>Rol</th>
+                    <th>Equipo</th>
+                    <th>Estado</th>
+                    <th>Registro</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in usuarios %}
+                <tr>
+                    <td>
+                        <span class="badge {% if u.role == 'administrador' %}bg-danger{% elif u.role == 'entrenador' %}bg-warning text-dark{% elif u.role == 'pendiente' %}bg-secondary{% else %}bg-primary{% endif %} px-2 py-1">
+                            {{ u.username }}
+                        </span>
+                    </td>
+                    <td>
+                        <strong>{{ u.get_full_name|default:"—" }}</strong>
+                        {% if u.phone %}
+                        <div class="text-muted" style="font-size:0.75rem">
+                            <i class="fas fa-phone me-1"></i>{{ u.phone }}
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted small">{{ u.email }}</td>
+                    <td class="small">
+                        {% if u.documento %}
+                            <code>{{ u.documento }}</code>
+                        {% else %}
+                            <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge {% if u.role == 'administrador' %}bg-danger{% elif u.role == 'entrenador' %}bg-warning text-dark{% elif u.role == 'pendiente' %}bg-secondary{% else %}bg-primary{% endif %}">
+                            {{ u.get_role_display }}
+                        </span>
+                    </td>
+                    <td class="small">
+                        {% if u.role == 'deportista' %}
+                            {% with jugador=u.jugador %}
+                                {% if jugador and jugador.equipo %}
+                                    <span class="badge bg-secondary">{{ jugador.equipo.nombre }}</span>
+                                    {% if jugador.posicion %}
+                                    <div class="text-muted" style="font-size:0.72rem">{{ jugador.posicion }}</div>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-warning small"><i class="fas fa-exclamation-triangle me-1"></i>Sin equipo</span>
+                                {% endif %}
+                            {% endwith %}
+                        {% elif u.role == 'entrenador' %}
+                            {% with equipos=u.equipos.all %}
+                                {% if equipos %}
+                                    <span class="text-muted small">{{ equipos|length }} equipo(s)</span>
+                                {% else %}
+                                    <span class="text-muted small">—</span>
+                                {% endif %}
+                            {% endwith %}
+                        {% else %}
+                            <span class="text-muted small">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge {% if u.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                            {% if u.is_active %}Activo{% else %}Inactivo{% endif %}
+                        </span>
+                    </td>
+                    <td class="text-muted small">{{ u.date_joined|date:"d/m/Y" }}</td>
+                    <td>
+                        <a href="/panel/usuarios/{{ u.id }}/editar/"
+                           class="btn btn-outline-warning btn-action me-1"
+                           title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        {% if u.id != request.user.id %}
+                        <a href="/panel/usuarios/{{ u.id }}/eliminar/"
+                           class="btn btn-outline-danger btn-action"
+                           title="Eliminar"
+                           onclick="return confirm('¿Eliminar al usuario {{ u.username }}? Esta acción no se puede deshacer.')">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="text-center text-muted py-4">
+                        <i class="fas fa-users-slash fa-2x mb-2 d-block opacity-25"></i>
+                        No se encontraron usuarios
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Paginación -->
+    {% if usuarios.has_other_pages %}
+    <nav>
+        <ul class="pagination pagination-sm justify-content-center">
+            {% if usuarios.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ usuarios.previous_page_number }}&buscar={{ buscar }}&rol={{ rol }}&estado={{ estado }}">
+                    «
+                </a>
+            </li>
+            {% endif %}
+            <li class="page-item active">
+                <span class="page-link">{{ usuarios.number }} / {{ usuarios.paginator.num_pages }}</span>
+            </li>
+            {% if usuarios.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ usuarios.next_page_number }}&buscar={{ buscar }}&rol={{ rol }}&estado={{ estado }}">
+                    »
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

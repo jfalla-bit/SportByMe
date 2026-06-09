@@ -1,0 +1,190 @@
+{% extends 'panel/base_panel.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+{% block page_title %}Dashboard Principal{% endblock %}
+
+{% block content %}
+<!-- Estadísticas de usuarios -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card stat-card bg-primary text-white">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="fs-2 fw-bold">{{ total_users }}</div>
+                    <div class="small">Total Usuarios</div>
+                </div>
+                <i class="fas fa-users fa-2x opacity-50"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-success text-white">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="fs-2 fw-bold">{{ total_equipos }}</div>
+                    <div class="small">Equipos Activos</div>
+                </div>
+                <i class="fas fa-shield-alt fa-2x opacity-50"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-warning text-white">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="fs-2 fw-bold">{{ total_entrenamientos }}</div>
+                    <div class="small">Entrenamientos</div>
+                </div>
+                <i class="fas fa-dumbbell fa-2x opacity-50"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stat-card bg-info text-white">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="fs-2 fw-bold">{{ torneos_activos }}</div>
+                    <div class="small">Torneos Activos</div>
+                </div>
+                <i class="fas fa-medal fa-2x opacity-50"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estadísticas financieras -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card stat-card border-start border-success border-4">
+            <div class="card-body">
+                <div class="text-muted small">Total Ingresos</div>
+                <div class="fs-3 fw-bold text-success">${{ total_ingresos }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card border-start border-danger border-4">
+            <div class="card-body">
+                <div class="text-muted small">Total Egresos</div>
+                <div class="fs-3 fw-bold text-danger">${{ total_egresos }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card border-start border-primary border-4">
+            <div class="card-body">
+                <div class="text-muted small">Balance</div>
+                <div class="fs-3 fw-bold {% if balance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    ${{ balance }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Distribución de usuarios y accesos rápidos -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="content-card h-100">
+            <h6 class="fw-bold mb-3"><i class="fas fa-chart-pie me-2 text-primary"></i>Distribución de Usuarios</h6>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span><i class="fas fa-crown text-danger me-2"></i>Administradores</span>
+                <span class="badge bg-danger">{{ total_admins }}</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span><i class="fas fa-chalkboard-teacher text-warning me-2"></i>Entrenadores</span>
+                <span class="badge bg-warning">{{ total_entrenadores }}</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span><i class="fas fa-running text-primary me-2"></i>Deportistas</span>
+                <span class="badge bg-primary">{{ total_deportistas }}</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="content-card h-100">
+            <h6 class="fw-bold mb-3"><i class="fas fa-bolt me-2 text-warning"></i>Accesos Rápidos</h6>
+            <div class="row g-2">
+                <div class="col-6 col-md-3">
+                    <a href="/panel/usuarios/crear/" class="btn btn-outline-primary w-100 py-3">
+                        <i class="fas fa-user-plus d-block mb-1"></i>
+                        <small>Nuevo Usuario</small>
+                    </a>
+                </div>
+                <div class="col-6 col-md-3">
+                    <a href="/panel/equipos/crear/" class="btn btn-outline-success w-100 py-3">
+                        <i class="fas fa-plus-circle d-block mb-1"></i>
+                        <small>Nuevo Equipo</small>
+                    </a>
+                </div>
+                <div class="col-6 col-md-3">
+                    <a href="/panel/entrenamientos/crear/" class="btn btn-outline-warning w-100 py-3">
+                        <i class="fas fa-calendar-plus d-block mb-1"></i>
+                        <small>Entrenamiento</small>
+                    </a>
+                </div>
+                <div class="col-6 col-md-3">
+                    <a href="/panel/finanzas/crear/" class="btn btn-outline-info w-100 py-3">
+                        <i class="fas fa-dollar-sign d-block mb-1"></i>
+                        <small>Movimiento</small>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Últimos registros -->
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="content-card">
+            <h6 class="fw-bold mb-3"><i class="fas fa-users me-2 text-primary"></i>Últimos Usuarios</h6>
+            <table class="table table-sm table-hover">
+                <thead><tr><th>Usuario</th><th>Rol</th><th>Fecha</th></tr></thead>
+                <tbody>
+                    {% for u in ultimos_usuarios %}
+                    <tr>
+                        <td>{{ u.username }}</td>
+                        <td>
+                            <span class="badge {% if u.role == 'administrador' %}bg-danger{% elif u.role == 'entrenador' %}bg-warning{% else %}bg-primary{% endif %}">
+                                {{ u.get_role_display }}
+                            </span>
+                        </td>
+                        <td class="text-muted small">{{ u.date_joined|date:"d/m/Y" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-muted text-center">Sin usuarios</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <a href="/panel/usuarios/" class="btn btn-sm btn-outline-primary">Ver todos</a>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="content-card">
+            <h6 class="fw-bold mb-3"><i class="fas fa-dollar-sign me-2 text-success"></i>Últimos Movimientos</h6>
+            <table class="table table-sm table-hover">
+                <thead><tr><th>Descripción</th><th>Tipo</th><th>Monto</th></tr></thead>
+                <tbody>
+                    {% for f in ultimas_finanzas %}
+                    <tr>
+                        <td class="small">{{ f.descripcion|truncatechars:25 }}</td>
+                        <td>
+                            <span class="badge {% if f.tipo == 'ingreso' %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ f.tipo }}
+                            </span>
+                        </td>
+                        <td class="fw-bold {% if f.tipo == 'ingreso' %}text-success{% else %}text-danger{% endif %}">
+                            ${{ f.monto }}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="3" class="text-muted text-center">Sin movimientos</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <a href="/panel/finanzas/" class="btn btn-sm btn-outline-success">Ver todos</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

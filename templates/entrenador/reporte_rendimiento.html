@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+    @page { size: A4; margin: 1.5cm 1.2cm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Helvetica, Arial, sans-serif; font-size: 9pt; color: #222; }
+
+    .header { border-bottom: 3px solid #1a1a2e; padding-bottom: 8px; margin-bottom: 12px; }
+    .org-name { font-size: 16pt; font-weight: bold; color: #1a1a2e; }
+    .report-title { font-size: 12pt; font-weight: bold; color: #333; margin-top: 2px; }
+    .meta { font-size: 7.5pt; color: #666; margin-top: 4px; }
+
+    /* Separador de sección jugador (en reporte de equipo) */
+    .jugador-section { margin-top: 14px; border-top: 2px solid #1a1a2e; padding-top: 6px; }
+    .jugador-nombre { font-size: 11pt; font-weight: bold; color: #1a1a2e; }
+    .jugador-meta { font-size: 8pt; color: #555; margin-bottom: 6px; }
+
+    /* Tarjetas de resumen */
+    .stats-row { display: table; width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+    .stat-cell { display: table-cell; text-align: center; padding: 5px 8px; border: 1px solid #ddd; background: #f9f9f9; }
+    .stat-label { font-size: 7pt; color: #666; }
+    .stat-value { font-size: 12pt; font-weight: bold; }
+    .t-success { color: #198754; } .t-primary { color: #0d6efd; }
+    .t-warning  { color: #e6a817; } .t-danger  { color: #dc3545; }
+
+    /* Subtítulos de subsección */
+    .section-title { font-size: 9pt; font-weight: bold; color: #fff; background: #1a1a2e;
+                     padding: 3px 8px; margin: 8px 0 4px 0; }
+
+    /* Tablas */
+    table.data { width: 100%; border-collapse: collapse; margin-bottom: 6px; }
+    table.data thead tr { background: #16213e; color: #fff; }
+    table.data thead th { padding: 4px 5px; font-size: 7.5pt; text-align: left; }
+    table.data tbody tr:nth-child(even) { background: #f4f6f9; }
+    table.data tbody td { padding: 3px 5px; font-size: 8pt; border-bottom: 1px solid #e8e8e8; }
+
+    .badge { display: inline-block; padding: 1px 5px; border-radius: 3px; font-size: 7pt; font-weight: bold; }
+    .b-primary  { background: #0d6efd; color: #fff; }
+    .b-info     { background: #0dcaf0; color: #000; }
+    .b-success  { background: #198754; color: #fff; }
+    .b-secondary{ background: #6c757d; color: #fff; }
+    .b-warning  { background: #ffc107; color: #000; }
+    .b-danger   { background: #dc3545; color: #fff; }
+
+    .no-data { color: #999; font-style: italic; font-size: 8pt; padding: 4px 0; }
+
+    .footer { margin-top: 14px; border-top: 1px solid #ccc; padding-top: 6px;
+              font-size: 7.5pt; color: #888; display: table; width: 100%; }
+    .footer-left  { display: table-cell; }
+    .footer-right { display: table-cell; text-align: right; }
+</style>
+</head>
+<body>
+
+<!-- ENCABEZADO -->
+<div class="header">
+    <div class="org-name">&#9917; Sistema Deportivo</div>
+    <div class="report-title">{{ titulo }}</div>
+    <div class="meta">
+        Generado: {{ fecha_generacion|date:"d/m/Y H:i" }} &nbsp;|&nbsp;
+        Por: {{ generado_por }}
+    </div>
+</div>
+
+<!-- ═══════════════════ REPORTE POR JUGADOR ═══════════════════ -->
+{% if tipo == 'jugador' %}
+
+<div class="jugador-meta">
+    {% if jugador.equipo %}<strong>Equipo:</strong> {{ jugador.equipo.nombre }} &nbsp;|&nbsp;{% endif %}
+    <strong>Posición:</strong> {{ jugador.posicion|default:"—" }}
+    {% if jugador.numero_camiseta %} &nbsp;|&nbsp; <strong>Camiseta:</strong> #{{ jugador.numero_camiseta }}{% endif %}
+</div>
+
+<!-- Resumen partidos -->
+{% if stats %}
+<div class="stats-row">
+    <div class="stat-cell"><div class="stat-label">Partidos</div><div class="stat-value">{{ stats|length }}</div></div>
+    <div class="stat-cell"><div class="stat-label">Goles</div><div class="stat-value t-success">{{ totales.total_goles|default:0 }}</div></div>
+    <div class="stat-cell"><div class="stat-label">Asistencias</div><div class="stat-value t-primary">{{ totales.total_asistencias|default:0 }}</div></div>
+    <div class="stat-cell"><div class="stat-label">Amarillas</div><div class="stat-value t-warning">{{ totales.total_amarillas|default:0 }}</div></div>
+    <div class="stat-cell"><div class="stat-label">Rojas</div><div class="stat-value t-danger">{{ totales.total_rojas|default:0 }}</div></div>
+    <div class="stat-cell"><div class="stat-label">Calif. prom.</div><div class="stat-value">{% if totales.promedio_calif %}{{ totales.promedio_calif|floatformat:1 }}{% else %}—{% endif %}</div></div>
+</div>
+{% endif %}
+
+<!-- Evaluaciones -->
+<div class="section-title">Evaluaciones ({{ evaluaciones|length }})</div>
+{% if evaluaciones %}
+<table class="data">
+    <thead><tr><th>Título</th><th>Tipo</th><th>Fecha</th><th>Puntaje</th><th>Descripción</th></tr></thead>
+    <tbody>
+    {% for ev in evaluaciones %}
+    <tr>
+        <td><strong>{{ ev.titulo }}</strong></td>
+        <td><span class="badge {% if ev.tipo == 'tecnica' %}b-primary{% elif ev.tipo == 'tactica' %}b-info{% else %}b-success{% endif %}">{{ ev.get_tipo_display }}</span></td>
+        <td>{{ ev.fecha|date:"d/m/Y" }}</td>
+        <td>{% if ev.puntaje %}<span class="badge {% if ev.puntaje >= 4 %}b-success{% elif ev.puntaje >= 2.5 %}b-warning{% else %}b-danger{% endif %}">{{ ev.puntaje }}/5</span>{% else %}<span class="badge b-secondary">S/P</span>{% endif %}</td>
+        <td>{{ ev.descripcion|truncatechars:60|default:"—" }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}<p class="no-data">Sin evaluaciones registradas.</p>{% endif %}
+
+<!-- Observaciones -->
+<div class="section-title">Observaciones ({{ observaciones|length }})</div>
+{% if observaciones %}
+<table class="data">
+    <thead><tr><th>Tipo</th><th>Fecha</th><th>Descripción</th></tr></thead>
+    <tbody>
+    {% for obs in observaciones %}
+    <tr>
+        <td><span class="badge {% if obs.tipo == 'tecnica' %}b-primary{% elif obs.tipo == 'tactica' %}b-info{% else %}b-success{% endif %}">{{ obs.get_tipo_display }}</span></td>
+        <td>{{ obs.fecha|date:"d/m/Y" }}</td>
+        <td>{{ obs.descripcion|truncatechars:100 }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}<p class="no-data">Sin observaciones registradas.</p>{% endif %}
+
+<!-- Estadísticas en partidos -->
+<div class="section-title">Estadísticas en Partidos ({{ stats|length }})</div>
+{% if stats %}
+<table class="data">
+    <thead><tr><th>Partido</th><th>Fecha</th><th>Result.</th><th>Goles</th><th>Asist.</th><th>Amar.</th><th>Roja</th><th>Calif.</th></tr></thead>
+    <tbody>
+    {% for s in stats %}
+    <tr>
+        <td>{{ s.partido.equipo_propio.nombre }} vs {{ s.partido.equipo_rival }}</td>
+        <td>{{ s.partido.fecha|date:"d/m/Y" }}</td>
+        <td>{% if s.partido.goles_favor is not None %}{{ s.partido.goles_favor }}-{{ s.partido.goles_contra }}{% else %}—{% endif %}</td>
+        <td>{{ s.goles|default:"—" }}</td>
+        <td>{{ s.asistencias|default:"—" }}</td>
+        <td>{% if s.tarjeta_amarilla %}Si{% else %}—{% endif %}</td>
+        <td>{% if s.tarjeta_roja %}Si{% else %}—{% endif %}</td>
+        <td>{{ s.calificacion|default:"—" }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}<p class="no-data">Sin estadísticas de partidos.</p>{% endif %}
+
+
+<!-- ═══════════════════ REPORTE POR EQUIPO ═══════════════════ -->
+{% elif tipo == 'equipo' %}
+
+<div class="jugador-meta">
+    <strong>Categoría:</strong> {{ equipo.categoria.nombre }} &nbsp;|&nbsp;
+    <strong>Jugadores:</strong> {{ datos_jugadores|length }}
+</div>
+
+{% for item in datos_jugadores %}
+<div class="jugador-section">
+    <div class="jugador-nombre">{{ item.jugador.usuario.get_full_name|default:item.jugador.usuario.username }}</div>
+    <div class="jugador-meta">
+        Posición: {{ item.jugador.posicion|default:"—" }}
+        {% if item.jugador.numero_camiseta %} | #{{ item.jugador.numero_camiseta }}{% endif %}
+    </div>
+
+    {% if item.stats %}
+    <div class="stats-row">
+        <div class="stat-cell"><div class="stat-label">Partidos</div><div class="stat-value">{{ item.stats|length }}</div></div>
+        <div class="stat-cell"><div class="stat-label">Goles</div><div class="stat-value t-success">{{ item.totales.total_goles|default:0 }}</div></div>
+        <div class="stat-cell"><div class="stat-label">Asistencias</div><div class="stat-value t-primary">{{ item.totales.total_asistencias|default:0 }}</div></div>
+        <div class="stat-cell"><div class="stat-label">Amarillas</div><div class="stat-value t-warning">{{ item.totales.total_amarillas|default:0 }}</div></div>
+        <div class="stat-cell"><div class="stat-label">Rojas</div><div class="stat-value t-danger">{{ item.totales.total_rojas|default:0 }}</div></div>
+        <div class="stat-cell"><div class="stat-label">Calif. prom.</div><div class="stat-value">{% if item.totales.promedio_calif %}{{ item.totales.promedio_calif|floatformat:1 }}{% else %}—{% endif %}</div></div>
+    </div>
+    {% endif %}
+
+    <div class="section-title">Evaluaciones ({{ item.evaluaciones|length }})</div>
+    {% if item.evaluaciones %}
+    <table class="data">
+        <thead><tr><th>Título</th><th>Tipo</th><th>Fecha</th><th>Puntaje</th></tr></thead>
+        <tbody>
+        {% for ev in item.evaluaciones %}
+        <tr>
+            <td>{{ ev.titulo }}</td>
+            <td><span class="badge {% if ev.tipo == 'tecnica' %}b-primary{% elif ev.tipo == 'tactica' %}b-info{% else %}b-success{% endif %}">{{ ev.get_tipo_display }}</span></td>
+            <td>{{ ev.fecha|date:"d/m/Y" }}</td>
+            <td>{% if ev.puntaje %}{{ ev.puntaje }}/5{% else %}S/P{% endif %}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}<p class="no-data">Sin evaluaciones.</p>{% endif %}
+
+    <div class="section-title">Observaciones ({{ item.observaciones|length }})</div>
+    {% if item.observaciones %}
+    <table class="data">
+        <thead><tr><th>Tipo</th><th>Fecha</th><th>Descripción</th></tr></thead>
+        <tbody>
+        {% for obs in item.observaciones %}
+        <tr>
+            <td><span class="badge {% if obs.tipo == 'tecnica' %}b-primary{% elif obs.tipo == 'tactica' %}b-info{% else %}b-success{% endif %}">{{ obs.get_tipo_display }}</span></td>
+            <td>{{ obs.fecha|date:"d/m/Y" }}</td>
+            <td>{{ obs.descripcion|truncatechars:100 }}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}<p class="no-data">Sin observaciones.</p>{% endif %}
+
+</div>
+{% empty %}
+<p class="no-data">El equipo no tiene jugadores activos.</p>
+{% endfor %}
+
+{% endif %}
+
+<!-- PIE -->
+<div class="footer">
+    <div class="footer-left">Sistema Deportivo &mdash; Documento generado automáticamente</div>
+    <div class="footer-right">{{ fecha_generacion|date:"d/m/Y H:i" }}</div>
+</div>
+
+</body>
+</html>

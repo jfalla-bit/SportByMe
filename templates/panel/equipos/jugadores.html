@@ -1,0 +1,100 @@
+{% extends 'panel/base_panel.html' %}
+{% block title %}Jugadores de {{ equipo.nombre }}{% endblock %}
+{% block nav_equipos %}active{% endblock %}
+{% block page_title %}Jugadores del Equipo{% endblock %}
+
+{% block content %}
+
+<!-- Cabecera del equipo -->
+<div class="content-card mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="fw-bold mb-1">
+                <i class="fas fa-shield-alt me-2 text-success"></i>{{ equipo.nombre }}
+            </h5>
+            <span class="badge bg-info me-1">{{ equipo.categoria.nombre }}</span>
+            <span class="badge {% if equipo.activo %}bg-success{% else %}bg-secondary{% endif %}">
+                {% if equipo.activo %}Activo{% else %}Inactivo{% endif %}
+            </span>
+            {% if equipo.entrenador %}
+            <span class="text-muted small ms-2">
+                <i class="fas fa-user-tie me-1"></i>{{ equipo.entrenador.get_full_name|default:equipo.entrenador.username }}
+            </span>
+            {% endif %}
+        </div>
+        <a href="/panel/equipos/" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i>Volver a Equipos
+        </a>
+    </div>
+</div>
+
+<div class="content-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0">
+            <i class="fas fa-users me-2 text-primary"></i>
+            Jugadores <span class="badge bg-primary ms-1">{{ total }}</span>
+        </h6>
+    </div>
+
+    <!-- Filtro por nombre/documento/posición -->
+    <form method="get" class="row g-2 mb-3">
+        <div class="col-md-8">
+            <input type="text" name="buscar" class="form-control form-control-sm"
+                   placeholder="Buscar por nombre, apellido, documento o posición..."
+                   value="{{ buscar }}">
+        </div>
+        <div class="col-md-4 d-flex gap-1">
+            <button type="submit" class="btn btn-primary btn-sm">
+                <i class="fas fa-search"></i>
+            </button>
+            <a href="/panel/equipos/{{ equipo.id }}/jugadores/" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-times"></i>
+            </a>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                    <th>Documento</th>
+                    <th>Posición</th>
+                    <th>Nº Camiseta</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for j in jugadores %}
+                <tr>
+                    <td>{{ j.usuario.first_name|default:"—" }}</td>
+                    <td>{{ j.usuario.last_name|default:"—" }}</td>
+                    <td class="small text-muted">{{ j.usuario.documento|default:"—" }}</td>
+                    <td class="small">{{ j.posicion|default:"—" }}</td>
+                    <td class="text-center">
+                        {% if j.numero_camiseta %}
+                        <span class="badge bg-secondary">#{{ j.numero_camiseta }}</span>
+                        {% else %}
+                        <span class="text-muted small">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge {% if j.activo %}bg-success{% else %}bg-secondary{% endif %}">
+                            {% if j.activo %}Activo{% else %}Inactivo{% endif %}
+                        </span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">
+                        <i class="fas fa-users fa-2x mb-2 d-block opacity-25"></i>
+                        {% if buscar %}No se encontraron jugadores con ese criterio.{% else %}Este equipo no tiene jugadores asignados.{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

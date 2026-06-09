@@ -1,0 +1,178 @@
+{% extends 'entrenador/base_entrenador.html' %}
+{% block title %}Estadísticas de Rendimiento{% endblock %}
+{% block page_title %}Estadísticas de Rendimiento{% endblock %}
+
+{% block content %}
+<!-- Filtros -->
+<div class="content-card mb-4">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label small fw-bold">Equipo</label>
+            <select name="equipo" class="form-select">
+                <option value="">Todos</option>
+                {% for eq in equipos %}
+                <option value="{{ eq.id }}" {% if equipo_id == eq.id|stringformat:"s" %}selected{% endif %}>{{ eq.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small fw-bold">Tipo evaluación</label>
+            <select name="tipo" class="form-select">
+                <option value="">Todos</option>
+                {% for val, label in tipos %}
+                <option value="{{ val }}" {% if tipo_eval == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small fw-bold">Desde</label>
+            <input type="date" name="fecha_desde" value="{{ fecha_desde }}" class="form-control">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small fw-bold">Hasta</label>
+            <input type="date" name="fecha_hasta" value="{{ fecha_hasta }}" class="form-control">
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-warning w-100"><i class="fas fa-search me-1"></i>Filtrar</button>
+            <a href="/entrenador/reportes/estadisticas-rendimiento/" class="btn btn-outline-secondary"><i class="fas fa-times"></i></a>
+        </div>
+    </form>
+</div>
+
+<!-- Tarjetas resumen -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-start border-warning border-4 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">Total Evaluaciones</div>
+                <div class="fs-3 fw-bold text-warning">{{ total_evaluaciones }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-start border-success border-4 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">Promedio General</div>
+                <div class="fs-3 fw-bold text-success">
+                    {% if promedio_general %}{{ promedio_general|floatformat:2 }}/5{% else %}—{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-start border-info border-4 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">Promedios por Tipo</div>
+                <div class="small mt-1">
+                    {% for pt in promedios_tipo %}
+                    <span class="badge bg-secondary me-1">{{ pt.tipo }}: {{ pt.avg|floatformat:1 }}</span>
+                    {% empty %}—{% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <!-- Evolución -->
+    <div class="col-md-6">
+        <div class="content-card h-100">
+            <h6 class="fw-bold mb-3"><i class="fas fa-chart-line me-2 text-warning"></i>Evolución del Promedio por Mes</h6>
+            {% if evolucion %}
+            <canvas id="graficoEvolucion" height="200"></canvas>
+            {% else %}
+            <p class="text-muted text-center py-4">Sin datos para mostrar evolución.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Comparación -->
+    <div class="col-md-6">
+        <div class="content-card h-100">
+            <h6 class="fw-bold mb-3"><i class="fas fa-chart-bar me-2 text-primary"></i>Comparación de Deportistas (Top 15)</h6>
+            {% if comparacion %}
+            <canvas id="graficoComparacion" height="200"></canvas>
+            {% else %}
+            <p class="text-muted text-center py-4">Sin datos para mostrar comparación.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Tabla ranking -->
+{% if comparacion %}
+<div class="content-card">
+    <h6 class="fw-bold mb-3"><i class="fas fa-table me-2 text-info"></i>Ranking de Deportistas por Promedio</h6>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr><th>#</th><th>Deportista</th><th>Equipo</th><th>Evaluaciones</th><th>Promedio</th><th>Nivel</th></tr>
+            </thead>
+            <tbody>
+                {% for r in comparacion %}
+                <tr>
+                    <td class="fw-bold text-muted">{{ forloop.counter }}</td>
+                    <td>{{ r.jugador__usuario__first_name }} {{ r.jugador__usuario__last_name }}</td>
+                    <td class="small text-muted">{{ r.jugador__equipo__nombre|default:"—" }}</td>
+                    <td><span class="badge bg-secondary">{{ r.total_ev }}</span></td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="progress flex-grow-1" style="height:8px">
+                                <div class="progress-bar {% if r.avg >= 4 %}bg-success{% elif r.avg >= 2.5 %}bg-warning{% else %}bg-danger{% endif %}"
+                                     style="width:{{ r.avg|floatformat:0 }}0%"></div>
+                            </div>
+                            <span class="fw-bold">{{ r.avg|floatformat:2 }}</span>
+                        </div>
+                    </td>
+                    <td>
+                        {% if r.avg >= 4 %}<span class="badge bg-success">Excelente</span>
+                        {% elif r.avg >= 3 %}<span class="badge bg-primary">Bueno</span>
+                        {% elif r.avg >= 2 %}<span class="badge bg-warning text-dark">Regular</span>
+                        {% else %}<span class="badge bg-danger">Bajo</span>{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+{% if evolucion %}
+new Chart(document.getElementById('graficoEvolucion'), {
+    type: 'line',
+    data: {
+        labels: {{ evo_labels|safe }},
+        datasets: [{
+            label: 'Promedio',
+            data: {{ evo_valores|safe }},
+            borderColor: '#ffc107',
+            backgroundColor: 'rgba(255,193,7,0.1)',
+            tension: 0.3, fill: true, pointRadius: 4
+        }]
+    },
+    options: { scales: { y: { min: 0, max: 5 } }, plugins: { legend: { display: false } } }
+});
+{% endif %}
+{% if comparacion %}
+new Chart(document.getElementById('graficoComparacion'), {
+    type: 'bar',
+    data: {
+        labels: {{ comp_nombres|safe }},
+        datasets: [{
+            label: 'Promedio',
+            data: {{ comp_valores|safe }},
+            backgroundColor: {{ comp_valores|safe }}.map(v =>
+                v >= 4 ? 'rgba(25,135,84,0.7)' : v >= 2.5 ? 'rgba(255,193,7,0.7)' : 'rgba(220,53,69,0.7)'
+            )
+        }]
+    },
+    options: { scales: { y: { min: 0, max: 5 } }, plugins: { legend: { display: false } } }
+});
+{% endif %}
+</script>
+{% endblock %}

@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+    @page {
+        size: A4 landscape;
+        margin: 1.5cm 1.2cm 1.5cm 1.2cm;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Helvetica, Arial, sans-serif; font-size: 9pt; color: #222; }
+
+    /* Encabezado */
+    .header { border-bottom: 3px solid #1a1a2e; padding-bottom: 8px; margin-bottom: 12px; }
+    .header-top { display: table; width: 100%; }
+    .header-left { display: table-cell; vertical-align: middle; }
+    .header-right { display: table-cell; text-align: right; vertical-align: middle; }
+    .org-name { font-size: 18pt; font-weight: bold; color: #1a1a2e; }
+    .report-title { font-size: 13pt; font-weight: bold; color: #333; margin-top: 2px; }
+    .meta { font-size: 7.5pt; color: #666; margin-top: 4px; }
+
+    /* Filtros aplicados */
+    .filtros-box { background: #f4f6f9; border-left: 4px solid #1a1a2e;
+                   padding: 5px 10px; margin-bottom: 10px; font-size: 8pt; }
+    .filtros-box strong { color: #1a1a2e; }
+
+    /* Resumen de totales */
+    .totales { display: table; width: 100%; margin-bottom: 10px; border-collapse: collapse; }
+    .total-cell { display: table-cell; text-align: center; padding: 6px 10px;
+                  border: 1px solid #ddd; background: #f9f9f9; }
+    .total-label { font-size: 7.5pt; color: #666; }
+    .total-value { font-size: 13pt; font-weight: bold; }
+    .t-success { color: #198754; }
+    .t-warning { color: #e6a817; }
+    .t-danger  { color: #dc3545; }
+    .t-primary { color: #0d6efd; }
+
+    /* Tabla principal */
+    table.main { width: 100%; border-collapse: collapse; margin-top: 4px; }
+    table.main thead tr { background: #1a1a2e; color: #fff; }
+    table.main thead th { padding: 5px 6px; font-size: 8pt; text-align: left;
+                          font-weight: bold; letter-spacing: 0.3px; }
+    table.main tbody tr:nth-child(even) { background: #f4f6f9; }
+    table.main tbody tr:nth-child(odd)  { background: #ffffff; }
+    table.main tbody td { padding: 4px 6px; font-size: 8pt; border-bottom: 1px solid #e8e8e8; }
+    table.main tbody tr.row-danger  { background: #fde8e8 !important; }
+    table.main tbody tr.row-success { background: #e8f5e9 !important; }
+    table.main tbody tr.row-warning { background: #fff8e1 !important; }
+
+    /* Badges de estado */
+    .badge { display: inline-block; padding: 2px 6px; border-radius: 3px;
+             font-size: 7pt; font-weight: bold; }
+    .badge-success  { background: #198754; color: #fff; }
+    .badge-danger   { background: #dc3545; color: #fff; }
+    .badge-warning  { background: #ffc107; color: #000; }
+    .badge-primary  { background: #0d6efd; color: #fff; }
+    .badge-secondary{ background: #6c757d; color: #fff; }
+    .badge-info     { background: #0dcaf0; color: #000; }
+
+    /* Pie */
+    .footer { margin-top: 14px; border-top: 1px solid #ccc; padding-top: 6px;
+              font-size: 7.5pt; color: #888; display: table; width: 100%; }
+    .footer-left  { display: table-cell; }
+    .footer-right { display: table-cell; text-align: right; }
+    .no-data { text-align: center; color: #999; padding: 20px; font-style: italic; }
+</style>
+</head>
+<body>
+
+<!-- ── ENCABEZADO ─────────────────────────────────────────────────────────── -->
+<div class="header">
+    <div class="header-top">
+        <div class="header-left">
+            <div class="org-name">&#9917; Sistema Deportivo</div>
+            <div class="report-title">{{ titulo }}</div>
+            <div class="meta">
+                Generado: {{ fecha_generacion|date:"d/m/Y H:i" }} &nbsp;|&nbsp;
+                Por: {{ generado_por }} &nbsp;|&nbsp;
+                Total registros: <strong>{{ total_registros }}</strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── FILTROS APLICADOS ──────────────────────────────────────────────────── -->
+{% with filtros_activos=False %}
+{% for k, v in filtros.items %}{% if v %}{% with filtros_activos=True %}{% endwith %}{% endif %}{% endfor %}
+{% endwith %}
+{% for k, v in filtros.items %}{% if v %}
+{% if forloop.first %}<div class="filtros-box"><strong>Filtros aplicados:</strong> &nbsp;{% endif %}
+{{ k }}: <strong>{{ v }}</strong>{% if not forloop.last %} &nbsp;|&nbsp; {% endif %}
+{% if forloop.last %}</div>{% endif %}
+{% endif %}{% endfor %}
+
+<!-- ── TOTALES (según módulo) ─────────────────────────────────────────────── -->
+{% if modulo == 'pagos' %}
+<table class="totales">
+    <tr>
+        <td class="total-cell">
+            <div class="total-label">Total Cobrado</div>
+            <div class="total-value t-success">${{ total_pagado }}</div>
+        </td>
+        <td class="total-cell">
+            <div class="total-label">Pendiente</div>
+            <div class="total-value t-warning">${{ total_pendiente }}</div>
+        </td>
+        <td class="total-cell">
+            <div class="total-label">Vencido</div>
+            <div class="total-value t-danger">${{ total_vencido }}</div>
+        </td>
+        <td class="total-cell">
+            <div class="total-label">Total General</div>
+            <div class="total-value t-primary">${{ total_general }}</div>
+        </td>
+    </tr>
+</table>
+{% endif %}
+
+{% if modulo == 'finanzas' %}
+<table class="totales">
+    <tr>
+        <td class="total-cell">
+            <div class="total-label">Total Ingresos</div>
+            <div class="total-value t-success">${{ total_ingresos }}</div>
+        </td>
+        <td class="total-cell">
+            <div class="total-label">Total Egresos</div>
+            <div class="total-value t-danger">${{ total_egresos }}</div>
+        </td>
+        <td class="total-cell">
+            <div class="total-label">Balance</div>
+            <div class="total-value {% if balance >= 0 %}t-success{% else %}t-danger{% endif %}">${{ balance }}</div>
+        </td>
+    </tr>
+</table>
+{% endif %}
+
+<!-- ── TABLA DE DATOS ─────────────────────────────────────────────────────── -->
+{% if total_registros == 0 %}
+<p class="no-data">No se encontraron registros con los filtros aplicados.</p>
+{% else %}
+
+<table class="main">
+    <thead>
+        <tr>
+            <th>#</th>
+            {% for col in columnas %}<th>{{ col }}</th>{% endfor %}
+        </tr>
+    </thead>
+    <tbody>
+
+    {% if modulo == 'usuarios' %}
+        {% for u in registros %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td><strong>{{ u.username }}</strong></td>
+            <td>{{ u.get_full_name|default:"—" }}</td>
+            <td>{{ u.email }}</td>
+            <td>{{ u.documento|default:"—" }}</td>
+            <td>
+                <span class="badge {% if u.role == 'administrador' %}badge-danger{% elif u.role == 'entrenador' %}badge-warning{% else %}badge-primary{% endif %}">
+                    {{ u.get_role_display }}
+                </span>
+            </td>
+            <td>
+                <span class="badge {% if u.is_active %}badge-success{% else %}badge-secondary{% endif %}">
+                    {% if u.is_active %}Activo{% else %}Inactivo{% endif %}
+                </span>
+            </td>
+            <td>{{ u.date_joined|date:"d/m/Y" }}</td>
+        </tr>
+        {% endfor %}
+
+    {% elif modulo == 'pagos' %}
+        {% for p in registros %}
+        <tr class="{% if p.estado == 'vencido' %}row-danger{% elif p.estado == 'pagado' %}row-success{% elif p.estado == 'en_revision' %}row-warning{% endif %}">
+            <td>{{ forloop.counter }}</td>
+            <td>
+                {{ p.jugador.usuario.get_full_name|default:p.jugador.usuario.username }}
+                {% if p.jugador.usuario.documento %}<br><small>Doc: {{ p.jugador.usuario.documento }}</small>{% endif %}
+            </td>
+            <td>{% if p.jugador.equipo %}{{ p.jugador.equipo.nombre }}{% else %}—{% endif %}</td>
+            <td>{{ p.descripcion }}</td>
+            <td>{{ p.get_concepto_display }}</td>
+            <td><strong>${{ p.monto }}</strong></td>
+            <td>{{ p.fecha_vencimiento|date:"d/m/Y" }}</td>
+            <td>{% if p.metodo_pago %}{{ p.get_metodo_pago_display }}{% else %}—{% endif %}</td>
+            <td>
+                <span class="badge {% if p.estado == 'pagado' %}badge-success{% elif p.estado == 'vencido' %}badge-danger{% elif p.estado == 'en_revision' %}badge-warning{% else %}badge-secondary{% endif %}">
+                    {{ p.get_estado_display }}
+                </span>
+            </td>
+        </tr>
+        {% endfor %}
+
+    {% elif modulo == 'entrenamientos' %}
+        {% for e in registros %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td><strong>{{ e.titulo }}</strong></td>
+            <td>{{ e.equipo.nombre }}</td>
+            <td>{{ e.entrenador.get_full_name|default:"Sin asignar" }}</td>
+            <td>{{ e.fecha|date:"d/m/Y" }}</td>
+            <td>{{ e.hora_inicio|time:"H:i" }} - {{ e.hora_fin|time:"H:i" }}</td>
+            <td>{{ e.lugar|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+
+    {% elif modulo == 'equipos' %}
+        {% for e in registros %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td><strong>{{ e.nombre }}</strong></td>
+            <td>{{ e.categoria.nombre }}</td>
+            <td>{{ e.entrenador.get_full_name|default:"Sin asignar" }}</td>
+            <td>{{ e.num_jugadores }}</td>
+            <td>
+                <span class="badge {% if e.activo %}badge-success{% else %}badge-secondary{% endif %}">
+                    {% if e.activo %}Activo{% else %}Inactivo{% endif %}
+                </span>
+            </td>
+        </tr>
+        {% endfor %}
+
+    {% elif modulo == 'torneos' %}
+        {% for t in registros %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td><strong>{{ t.nombre }}</strong></td>
+            <td>{{ t.categoria.nombre }}</td>
+            <td>{{ t.fecha_inicio|date:"d/m/Y" }}</td>
+            <td>{{ t.fecha_fin|date:"d/m/Y" }}</td>
+            <td>
+                <span class="badge {% if t.estado == 'en_curso' %}badge-success{% elif t.estado == 'planificado' %}badge-warning{% elif t.estado == 'finalizado' %}badge-secondary{% else %}badge-danger{% endif %}">
+                    {{ t.get_estado_display }}
+                </span>
+            </td>
+            <td>{{ t.num_partidos }}</td>
+        </tr>
+        {% endfor %}
+
+    {% elif modulo == 'finanzas' %}
+        {% for f in registros %}
+        <tr class="{% if f.tipo == 'ingreso' %}row-success{% else %}row-danger{% endif %}">
+            <td>{{ forloop.counter }}</td>
+            <td>{{ f.descripcion }}</td>
+            <td>
+                <span class="badge {% if f.tipo == 'ingreso' %}badge-success{% else %}badge-danger{% endif %}">
+                    {{ f.tipo|capfirst }}
+                </span>
+            </td>
+            <td>{{ f.get_categoria_display }}</td>
+            <td><strong>${{ f.monto }}</strong></td>
+            <td>{{ f.fecha|date:"d/m/Y" }}</td>
+            <td>{{ f.registrado_por.username|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+    {% elif modulo == 'deportistas' %}
+        {% for j in registros %}
+        <tr class="{% if not j.activo %}row-danger{% endif %}">
+            <td>{{ forloop.counter }}</td>
+            <td><strong>{{ j.usuario.get_full_name|default:j.usuario.username }}</strong></td>
+            <td>{{ j.usuario.documento|default:"—" }}</td>
+            <td>{% if j.equipo %}{{ j.equipo.nombre }}{% else %}<span style="color:#999">Sin equipo</span>{% endif %}</td>
+            <td>{% if j.equipo %}{{ j.equipo.categoria.nombre }}{% else %}—{% endif %}</td>
+            <td>{{ j.posicion|default:"—" }}</td>
+            <td>{% if j.numero_camiseta %}#{{ j.numero_camiseta }}{% else %}—{% endif %}</td>
+            <td>
+                <span class="badge {% if j.activo %}badge-success{% else %}badge-secondary{% endif %}">
+                    {% if j.activo %}Activo{% else %}Inactivo{% endif %}
+                </span>
+            </td>
+        </tr>
+        {% endfor %}
+
+    {% elif modulo == 'asistencia' %}
+        {% for a in registros %}
+        <tr class="{% if a.estado == 'asistio' %}row-success{% elif a.estado == 'no_asistio' %}row-danger{% else %}row-warning{% endif %}">
+            <td>{{ forloop.counter }}</td>
+            <td>{{ a.entrenamiento.fecha|date:"d/m/Y" }}</td>
+            <td>{{ a.entrenamiento.titulo }}</td>
+            <td>{{ a.entrenamiento.equipo.nombre }}</td>
+            <td><strong>{{ a.jugador.usuario.get_full_name|default:a.jugador.usuario.username }}</strong></td>
+            <td>{{ a.jugador.usuario.documento|default:"—" }}</td>
+            <td>
+                <span class="badge {% if a.estado == 'asistio' %}badge-success{% elif a.estado == 'no_asistio' %}badge-danger{% else %}badge-warning{% endif %}">
+                    {{ a.get_estado_display }}
+                </span>
+            </td>
+            <td>{{ a.observacion|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+
+    {% elif modulo == 'reporte_entrenamientos' %}
+        {% for e in registros %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ e.fecha|date:"d/m/Y" }}</td>
+            <td>{{ e.hora_inicio|time:"H:i" }} – {{ e.hora_fin|time:"H:i" }}</td>
+            <td><strong>{{ e.titulo }}</strong></td>
+            <td>{{ e.equipo.nombre }}</td>
+            <td>{{ e.equipo.categoria.nombre }}</td>
+            <td>{{ e.entrenador.get_full_name|default:"Sin asignar" }}</td>
+            <td>{{ e.lugar|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+
+    {% elif modulo == 'reporte_partidos' %}
+        {% for p in registros %}
+        <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ p.fecha|date:"d/m/Y" }}</td>
+            <td>{{ p.hora|time:"H:i" }}</td>
+            <td><strong>{{ p.equipo_propio.nombre }}</strong></td>
+            <td>{{ p.equipo_rival }}</td>
+            <td>
+                {% if p.goles_favor is not None %}
+                    <strong>{{ p.goles_favor }} – {{ p.goles_contra }}</strong>
+                    {% if p.goles_favor > p.goles_contra %}<span class="badge badge-success">V</span>
+                    {% elif p.goles_favor < p.goles_contra %}<span class="badge badge-danger">D</span>
+                    {% else %}<span class="badge badge-warning">E</span>{% endif %}
+                {% else %}—{% endif %}
+            </td>
+            <td>{{ p.cancha|default:"—" }}</td>
+            <td>
+                {% with stats=p.estadisticas.all %}
+                {% if stats %}
+                    Goles: {{ stats|length }}
+                {% else %}—{% endif %}
+                {% endwith %}
+            </td>
+        </tr>
+        {% endfor %}
+
+    {% elif modulo == 'reporte_financiero' %}
+        {% for p in registros %}
+        <tr class="{% if p.estado == 'pagado' %}row-success{% elif p.estado == 'vencido' %}row-danger{% elif p.estado == 'en_revision' %}row-warning{% endif %}">
+            <td>{{ forloop.counter }}</td>
+            <td>
+                <strong>{{ p.jugador.usuario.get_full_name|default:p.jugador.usuario.username }}</strong>
+                {% if p.jugador.usuario.documento %}<br><small>Doc: {{ p.jugador.usuario.documento }}</small>{% endif %}
+            </td>
+            <td>{% if p.jugador.equipo %}{{ p.jugador.equipo.nombre }}{% else %}—{% endif %}</td>
+            <td>{{ p.get_concepto_display }}</td>
+            <td>{{ p.descripcion|truncatechars:35 }}</td>
+            <td><strong>${{ p.monto }}</strong></td>
+            <td>{{ p.fecha_vencimiento|date:"d/m/Y" }}</td>
+            <td>{% if p.fecha_pago %}{{ p.fecha_pago|date:"d/m/Y" }}{% else %}—{% endif %}</td>
+            <td>{% if p.metodo_pago %}{{ p.get_metodo_pago_display }}{% else %}—{% endif %}</td>
+            <td>
+                <span class="badge {% if p.estado == 'pagado' %}badge-success{% elif p.estado == 'vencido' %}badge-danger{% elif p.estado == 'en_revision' %}badge-warning{% else %}badge-secondary{% endif %}">
+                    {{ p.get_estado_display }}
+                </span>
+            </td>
+        </tr>
+        {% endfor %}
+    {% endif %}
+
+    </tbody>
+</table>
+{% endif %}
+
+<!-- ── PIE DE PÁGINA ──────────────────────────────────────────────────────── -->
+<div class="footer">
+    <div class="footer-left">Sistema Deportivo &mdash; Documento generado automáticamente</div>
+    <div class="footer-right">{{ fecha_generacion|date:"d/m/Y H:i" }}</div>
+</div>
+
+</body>
+</html>

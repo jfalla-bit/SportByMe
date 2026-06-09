@@ -1,0 +1,111 @@
+{% extends 'entrenador/base_entrenador.html' %}
+{% block title %}Asistencia por Entrenamiento{% endblock %}
+{% block nav_entrenamientos %}active{% endblock %}
+{% block page_title %}Consulta de Asistencia por Entrenamiento{% endblock %}
+{% block content %}
+
+<div class="content-card mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0"><i class="fas fa-clipboard-list me-2 text-warning"></i>Por Entrenamiento</h6>
+        <a href="/entrenador/asistencia/deportista/" class="btn btn-outline-warning btn-sm">
+            <i class="fas fa-user me-1"></i>Ver por Deportista
+        </a>
+    </div>
+
+    <form method="get" class="row g-2">
+        <div class="col-md-4">
+            <label class="form-label fw-semibold small">Equipo</label>
+            <select name="equipo" id="sel-equipo" class="form-select form-select-sm">
+                <option value="">Seleccionar equipo...</option>
+                {% for e in equipos %}
+                <option value="{{ e.id }}" {% if equipo_id == e.id|stringformat:"s" %}selected{% endif %}>{{ e.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-5">
+            <label class="form-label fw-semibold small">Entrenamiento</label>
+            <select name="entrenamiento" class="form-select form-select-sm">
+                <option value="">{% if equipo_id %}Seleccionar entrenamiento...{% else %}Primero seleccioná un equipo{% endif %}</option>
+                {% for e in entrenamientos %}
+                <option value="{{ e.id }}" {% if ent_id == e.id|stringformat:"s" %}selected{% endif %}>
+                    {{ e.titulo }} — {{ e.fecha|date:"d/m/Y" }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+            <button type="submit" class="btn btn-warning btn-sm me-1"><i class="fas fa-search me-1"></i>Consultar</button>
+            <a href="/entrenador/asistencia/" class="btn btn-outline-secondary btn-sm"><i class="fas fa-times"></i></a>
+        </div>
+    </form>
+</div>
+
+{% if entrenamiento %}
+<div class="content-card">
+    <h6 class="fw-bold mb-1">{{ entrenamiento.titulo }}</h6>
+    <p class="text-muted small mb-3">
+        <i class="fas fa-shield-alt me-1"></i>{{ entrenamiento.equipo.nombre }}
+        &nbsp;|&nbsp;<i class="fas fa-calendar me-1"></i>{{ entrenamiento.fecha|date:"d/m/Y" }}
+        &nbsp;|&nbsp;<i class="fas fa-clock me-1"></i>{{ entrenamiento.hora_inicio|time:"H:i" }} - {{ entrenamiento.hora_fin|time:"H:i" }}
+    </p>
+
+    {% if resumen %}
+    <div class="row g-2 mb-4">
+        <div class="col-md-4">
+            <div class="card border-start border-success border-4 shadow-sm">
+                <div class="card-body py-2">
+                    <div class="text-muted small">Asistieron</div>
+                    <div class="fs-4 fw-bold text-success">{{ resumen.asistio|default:0 }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-start border-danger border-4 shadow-sm">
+                <div class="card-body py-2">
+                    <div class="text-muted small">No Asistieron</div>
+                    <div class="fs-4 fw-bold text-danger">{{ resumen.no_asistio|default:0 }}</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-start border-warning border-4 shadow-sm">
+                <div class="card-body py-2">
+                    <div class="text-muted small">Justificados</div>
+                    <div class="fs-4 fw-bold text-warning">{{ resumen.justificado|default:0 }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr><th>Jugador</th><th>Posicion</th><th>Estado</th><th>Observacion</th></tr>
+        </thead>
+        <tbody>
+            {% for a in asistencias %}
+            <tr class="{% if a.estado == 'asistio' %}table-success{% elif a.estado == 'no_asistio' %}table-danger{% else %}table-warning{% endif %}">
+                <td><strong>{{ a.jugador.usuario.get_full_name|default:a.jugador.usuario.username }}</strong></td>
+                <td class="small text-muted">{{ a.jugador.posicion|default:"—" }}</td>
+                <td><span class="badge {% if a.estado == 'asistio' %}bg-success{% elif a.estado == 'no_asistio' %}bg-danger{% else %}bg-warning text-dark{% endif %}">{{ a.get_estado_display }}</span></td>
+                <td class="small text-muted">{{ a.observacion|default:"—" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="text-center text-muted py-4">No hay asistencia registrada para este entrenamiento.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('sel-equipo').addEventListener('change', function() {
+    const params = new URLSearchParams(window.location.search);
+    params.set('equipo', this.value);
+    params.delete('entrenamiento');
+    window.location.search = params.toString();
+});
+</script>
+{% endblock %}

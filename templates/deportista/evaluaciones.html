@@ -1,0 +1,92 @@
+{% extends 'deportista/base_deportista.html' %}
+{% block title %}Mis Evaluaciones{% endblock %}
+{% block nav_evaluaciones %}active{% endblock %}
+{% block page_title %}Mis Evaluaciones{% endblock %}
+
+{% block content %}
+{% if promedio %}
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card stat-card {% if promedio >= 7 %}bg-success{% elif promedio >= 5 %}bg-warning text-dark{% else %}bg-danger{% endif %} text-white">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="fs-2 fw-bold">{{ promedio|floatformat:1 }}</div>
+                    <div class="small opacity-75">Promedio General</div>
+                </div>
+                <i class="fas fa-star fa-2x opacity-50"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card bg-primary text-white">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="fs-2 fw-bold">{{ total_filtrados }}</div>
+                    <div class="small opacity-75">Total Evaluaciones</div>
+                </div>
+                <i class="fas fa-clipboard-list fa-2x opacity-50"></i>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="content-card">
+    <h6 class="fw-bold mb-3"><i class="fas fa-star me-2 text-success"></i>Mis Evaluaciones</h6>
+
+    <!-- Filtros -->
+    <form method="get" class="row g-2 mb-3 p-3 bg-light rounded">
+        <div class="col-md-4">
+            <input type="text" name="buscar" class="form-control form-control-sm"
+                   placeholder="Buscar por título u observaciones..." value="{{ buscar }}">
+        </div>
+        <div class="col-md-3">
+            <input type="date" name="fecha_desde" class="form-control form-control-sm"
+                   value="{{ fecha_desde }}" title="Desde">
+        </div>
+        <div class="col-md-3">
+            <input type="date" name="fecha_hasta" class="form-control form-control-sm"
+                   value="{{ fecha_hasta }}" title="Hasta">
+        </div>
+        <div class="col-md-2 d-flex gap-1">
+            <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-search"></i></button>
+            <a href="/deportista/evaluaciones/" class="btn btn-outline-secondary btn-sm"><i class="fas fa-times"></i></a>
+        </div>
+    </form>
+
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr><th>Evaluación</th><th>Entrenador</th><th>Fecha</th><th>Puntaje</th><th>Observaciones</th></tr>
+        </thead>
+        <tbody>
+            {% for ev in evaluaciones %}
+            <tr>
+                <td><strong>{{ ev.titulo }}</strong></td>
+                <td class="small">{{ ev.entrenador.get_full_name|default:"Sin asignar" }}</td>
+                <td class="small">{{ ev.fecha|date:"d/m/Y" }}</td>
+                <td>
+                    {% if ev.puntaje %}
+                    <span class="badge {% if ev.puntaje >= 7 %}bg-success{% elif ev.puntaje >= 5 %}bg-warning text-dark{% else %}bg-danger{% endif %} fs-6">
+                        {{ ev.puntaje }}/10
+                    </span>
+                    {% else %}
+                    <span class="badge bg-secondary">Sin puntaje</span>
+                    {% endif %}
+                </td>
+                <td class="small text-muted">{{ ev.observaciones|truncatechars:60|default:"-" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center text-muted py-4">No tienes evaluaciones registradas.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if evaluaciones.has_other_pages %}
+    <nav><ul class="pagination pagination-sm justify-content-center">
+        {% if evaluaciones.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ evaluaciones.previous_page_number }}&buscar={{ buscar }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}">Anterior</a></li>{% endif %}
+        <li class="page-item active"><span class="page-link">{{ evaluaciones.number }} / {{ evaluaciones.paginator.num_pages }}</span></li>
+        {% if evaluaciones.has_next %}<li class="page-item"><a class="page-link" href="?page={{ evaluaciones.next_page_number }}&buscar={{ buscar }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}">Siguiente</a></li>{% endif %}
+    </ul></nav>
+    {% endif %}
+</div>
+{% endblock %}

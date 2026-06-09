@@ -1,0 +1,129 @@
+{% extends 'entrenador/base_entrenador.html' %}
+{% block title %}Pagos{% endblock %}
+{% block nav_pagos %}active{% endblock %}
+{% block page_title %}Pagos de Jugadores{% endblock %}
+
+{% block content %}
+
+<!-- Alerta de vencidos -->
+{% if alertas_vencidos > 0 %}
+<div class="alert alert-danger d-flex align-items-center mb-4">
+    <i class="fas fa-exclamation-triangle fa-lg me-3"></i>
+    <div>
+        <strong>{{ alertas_vencidos }} pago(s) vencido(s)</strong> en tus equipos.
+        <a href="?estado=vencido" class="alert-link ms-2">Ver vencidos →</a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Resumen -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-start border-success border-4 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">Cobrado</div>
+                <div class="fs-3 fw-bold text-success">${{ total_pagado }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-start border-warning border-4 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">Pendiente</div>
+                <div class="fs-3 fw-bold text-warning">${{ total_pendiente }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-start border-danger border-4 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">Vencido</div>
+                <div class="fs-3 fw-bold text-danger">${{ total_vencido }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="content-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0"><i class="fas fa-dollar-sign me-2 text-primary"></i>Pagos de Jugadores</h6>
+        <span class="badge bg-secondary"><i class="fas fa-eye me-1"></i>Solo lectura</span>
+    </div>
+
+    <form method="get" class="row g-2 mb-3 p-3 bg-light rounded">
+        <div class="col-md-4">
+            <input type="text" name="buscar" class="form-control form-control-sm"
+                   placeholder="Buscar por descripción o jugador..." value="{{ buscar }}">
+        </div>
+        <div class="col-md-3">
+            <select name="equipo" class="form-select form-select-sm">
+                <option value="">Todos mis equipos</option>
+                {% for e in equipos %}
+                <option value="{{ e.id }}" {% if equipo_id == e.id|stringformat:"s" %}selected{% endif %}>{{ e.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select name="estado" class="form-select form-select-sm">
+                <option value="">Todos los estados</option>
+                {% for val, label in estados %}
+                <option value="{{ val }}" {% if estado == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2 d-flex gap-1">
+            <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-search"></i></button>
+            <a href="/entrenador/pagos/" class="btn btn-outline-secondary btn-sm"><i class="fas fa-times"></i></a>
+        </div>
+    </form>
+
+    {% if buscar or equipo_id or estado %}
+    <div class="alert alert-info py-2 mb-3">
+        <i class="fas fa-filter me-1"></i><strong>{{ total_filtrados }}</strong> pago(s) encontrado(s).
+    </div>
+    {% endif %}
+
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr><th>Jugador</th><th>Equipo</th><th>Descripción</th><th>Monto</th><th>Vencimiento</th><th>Estado</th></tr>
+        </thead>
+        <tbody>
+            {% for p in pagos %}
+            <tr>
+                <td><strong>{{ p.jugador.usuario.get_full_name|default:p.jugador.usuario.username }}</strong></td>
+                <td>
+                    {% if p.jugador.equipo %}
+                    <span class="badge bg-warning text-dark">{{ p.jugador.equipo.nombre }}</span>
+                    {% else %}<span class="text-muted small">-</span>{% endif %}
+                </td>
+                <td class="small">{{ p.descripcion|truncatechars:30 }}</td>
+                <td class="fw-bold">${{ p.monto }}</td>
+                <td class="small text-muted">{{ p.fecha_vencimiento|date:"d/m/Y" }}</td>
+                <td>
+                    <span class="badge {% if p.estado == 'pagado' %}bg-success{% elif p.estado == 'vencido' %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                        {{ p.get_estado_display }}
+                    </span>
+                </td>
+
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center text-muted py-4">No hay pagos registrados.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if pagos.has_other_pages %}
+    <nav class="mt-3">
+        <ul class="pagination pagination-sm justify-content-center">
+            {% if pagos.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ pagos.previous_page_number }}&buscar={{ buscar }}&equipo={{ equipo_id }}&estado={{ estado }}">«</a></li>
+            {% endif %}
+            <li class="page-item active"><span class="page-link">{{ pagos.number }} / {{ pagos.paginator.num_pages }}</span></li>
+            {% if pagos.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ pagos.next_page_number }}&buscar={{ buscar }}&equipo={{ equipo_id }}&estado={{ estado }}">»</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

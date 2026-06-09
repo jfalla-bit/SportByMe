@@ -1,0 +1,141 @@
+{% extends 'entrenador/base_entrenador.html' %}
+{% block title %}Convocatoria{% endblock %}
+{% block nav_partidos %}active{% endblock %}
+{% block page_title %}Convocatoria{% endblock %}
+
+{% block content %}
+
+<!-- Cabecera del partido -->
+<div class="content-card mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="fw-bold mb-1">
+                <i class="fas fa-futbol me-2 text-warning"></i>
+                {{ partido.equipo_propio.nombre }} <span class="text-muted">vs</span> {{ partido.equipo_rival }}
+            </h5>
+            <span class="text-muted small">
+                <i class="fas fa-calendar me-1"></i>{{ partido.fecha|date:"d/m/Y" }}
+                &nbsp;|&nbsp;
+                <i class="fas fa-clock me-1"></i>{{ partido.hora|time:"H:i" }}
+                {% if partido.cancha %}
+                &nbsp;|&nbsp;<i class="fas fa-map-marker-alt me-1"></i>{{ partido.cancha }}
+                {% endif %}
+            </span>
+        </div>
+        <a href="/entrenador/partidos/" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i>Volver
+        </a>
+    </div>
+</div>
+
+<div class="content-card">
+    <h6 class="fw-bold mb-3">
+        <i class="fas fa-users me-2 text-warning"></i>
+        Seleccionar Jugadores Convocados
+        <span class="badge bg-secondary ms-1">{{ jugadores|length }} disponibles</span>
+    </h6>
+
+    {% if jugadores %}
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- Botones rápidos -->
+        <div class="d-flex gap-2 mb-3">
+            <span class="text-muted small align-self-center me-1">Seleccionar:</span>
+            <button type="button" class="btn btn-warning btn-sm" onclick="toggleTodos(true)">
+                <i class="fas fa-check-double me-1"></i>Todos
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="toggleTodos(false)">
+                <i class="fas fa-times me-1"></i>Ninguno
+            </button>
+        </div>
+
+        <div class="table-responsive mb-4">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:50px">
+                            <input type="checkbox" id="check-all" class="form-check-input"
+                                   onchange="toggleTodos(this.checked)">
+                        </th>
+                        <th>Jugador</th>
+                        <th>Posición</th>
+                        <th>N° Camiseta</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for j in jugadores %}
+                    <tr id="fila-{{ j.id }}" class="{% if j.id in convocados %}table-warning{% endif %}">
+                        <td>
+                            <input type="checkbox" name="jugadores" value="{{ j.id }}"
+                                   class="form-check-input jugador-check"
+                                   {% if j.id in convocados %}checked{% endif %}
+                                   onchange="colorFila(this, {{ j.id }})">
+                        </td>
+                        <td>
+                            <strong>{{ j.usuario.get_full_name|default:j.usuario.username }}</strong>
+                        </td>
+                        <td class="small text-muted">{{ j.posicion|default:"—" }}</td>
+                        <td class="text-center">
+                            {% if j.numero_camiseta %}
+                            <span class="badge bg-secondary">#{{ j.numero_camiseta }}</span>
+                            {% else %}
+                            <span class="text-muted small">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Nota para la convocatoria</label>
+            <textarea name="nota" class="form-control" rows="3"
+                      placeholder="Indicaciones generales, lugar de concentración, horario de llegada...">{{ convocatoria.nota }}</textarea>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-warning">
+                <i class="fas fa-save me-1"></i>Guardar Convocatoria
+            </button>
+            <a href="/entrenador/partidos/" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+
+    {% else %}
+    <div class="text-center text-muted py-4">
+        <i class="fas fa-users fa-2x mb-2 d-block opacity-25"></i>
+        El equipo <strong>{{ partido.equipo_propio.nombre }}</strong> no tiene jugadores activos asignados.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function colorFila(checkbox, jugadorId) {
+    const fila = document.getElementById('fila-' + jugadorId);
+    fila.classList.toggle('table-warning', checkbox.checked);
+    actualizarCheckAll();
+}
+
+function toggleTodos(marcar) {
+    document.querySelectorAll('.jugador-check').forEach(cb => {
+        cb.checked = marcar;
+        const id = cb.value;
+        const fila = document.getElementById('fila-' + id);
+        if (fila) fila.classList.toggle('table-warning', marcar);
+    });
+    document.getElementById('check-all').checked = marcar;
+}
+
+function actualizarCheckAll() {
+    const todos  = document.querySelectorAll('.jugador-check');
+    const marcados = document.querySelectorAll('.jugador-check:checked');
+    document.getElementById('check-all').checked = todos.length === marcados.length;
+}
+
+document.addEventListener('DOMContentLoaded', actualizarCheckAll);
+</script>
+{% endblock %}

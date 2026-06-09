@@ -1,0 +1,75 @@
+{% extends 'acudiente/base_acudiente.html' %}
+{% block title %}Partidos y Resultados{% endblock %}
+{% block nav_partidos %}active{% endblock %}
+{% block page_title %}Partidos y Resultados del Deportista{% endblock %}
+
+{% block content %}
+{% if not jugador %}
+<div class="content-card text-center py-5">
+    <i class="fas fa-futbol fa-3x text-muted mb-3"></i>
+    <h5 class="text-muted">Sin deportista vinculado</h5>
+    <p class="text-muted">Contacta al administrador para que te vincule al deportista a tu cargo.</p>
+</div>
+{% else %}
+<div class="content-card">
+    <h6 class="fw-bold mb-3">
+        <i class="fas fa-futbol me-2 text-primary"></i>
+        Partidos de {{ jugador.usuario.get_full_name|default:jugador.usuario.username }}
+        <span class="badge bg-primary ms-1">{{ partidos_data|length }}</span>
+    </h6>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Partido</th>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Cancha</th>
+                    <th>Equipo</th>
+                    <th class="text-center">Resultado</th>
+                    <th class="text-center">⚽</th>
+                    <th class="text-center">🅰</th>
+                    <th class="text-center">🟨</th>
+                    <th class="text-center">🟥</th>
+                    <th class="text-center">⭐</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in partidos_data %}
+                <tr>
+                    <td>
+                        <strong>{{ item.partido.equipo_propio.nombre }}</strong>
+                        <span class="text-muted small"> vs {{ item.partido.equipo_rival }}</span>
+                    </td>
+                    <td class="small">{{ item.partido.fecha|date:"d/m/Y" }}</td>
+                    <td class="small text-muted">{{ item.partido.hora|time:"H:i" }}</td>
+                    <td class="small text-muted">{{ item.partido.cancha|default:"—" }}</td>
+                    <td class="small">{{ item.partido.equipo_propio.nombre }}</td>
+                    <td class="text-center">
+                        {% if item.partido.goles_favor is not None %}
+                            {% if item.partido.goles_favor > item.partido.goles_contra %}
+                            <span class="badge bg-success">{{ item.partido.goles_favor }} — {{ item.partido.goles_contra }} G</span>
+                            {% elif item.partido.goles_favor < item.partido.goles_contra %}
+                            <span class="badge bg-danger">{{ item.partido.goles_favor }} — {{ item.partido.goles_contra }} P</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ item.partido.goles_favor }} — {{ item.partido.goles_contra }} E</span>
+                            {% endif %}
+                        {% else %}
+                        <span class="badge bg-light text-dark border">Por jugar</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">{% if item.stat.goles %}<strong class="text-success">{{ item.stat.goles }}</strong>{% else %}—{% endif %}</td>
+                    <td class="text-center">{% if item.stat.asistencias %}<strong class="text-primary">{{ item.stat.asistencias }}</strong>{% else %}—{% endif %}</td>
+                    <td class="text-center">{% if item.stat.tarjeta_amarilla %}<span class="badge bg-warning text-dark">🟨</span>{% else %}—{% endif %}</td>
+                    <td class="text-center">{% if item.stat.tarjeta_roja %}<span class="badge bg-danger">🟥</span>{% else %}—{% endif %}</td>
+                    <td class="text-center">{% if item.stat.calificacion %}<strong>{{ item.stat.calificacion }}</strong>{% else %}—{% endif %}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="11" class="text-center text-muted py-4">El deportista no tiene estadísticas registradas en partidos aún.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

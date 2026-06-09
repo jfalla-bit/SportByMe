@@ -1,0 +1,61 @@
+{% extends 'panel/base_panel.html' %}
+{% block title %}Conceptos de Pago{% endblock %}
+{% block nav_conceptos %}active{% endblock %}
+{% block page_title %}Conceptos de Pago{% endblock %}
+
+{% block content %}
+<div class="content-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0">
+            <i class="fas fa-tags me-2 text-primary"></i>Conceptos de Pago
+        </h6>
+        <a href="/panel/conceptos/crear/" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus me-1"></i>Nuevo Concepto
+        </a>
+    </div>
+
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Monto Base</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in conceptos %}
+            <tr>
+                <td><strong>{{ c.nombre }}</strong></td>
+                <td class="text-muted small">{{ c.descripcion|default:"—" }}</td>
+                <td class="fw-bold">${{ c.monto_base }}</td>
+                <td>
+                    <span class="badge {% if c.activo %}bg-success{% else %}bg-secondary{% endif %}">
+                        {% if c.activo %}Activo{% else %}Inactivo{% endif %}
+                    </span>
+                </td>
+                <td>
+                    <a href="/panel/conceptos/{{ c.id }}/editar/"
+                       class="btn btn-outline-warning btn-action me-1" title="Editar">
+                        <i class="fas fa-edit"></i>
+                    </a>
+                    <a href="/panel/conceptos/{{ c.id }}/eliminar/"
+                       class="btn btn-outline-danger btn-action" title="Eliminar"
+                       onclick="return confirm('¿Eliminar el concepto {{ c.nombre }}?')">
+                        <i class="fas fa-trash"></i>
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center text-muted py-4">
+                    <i class="fas fa-tags fa-2x mb-2 d-block opacity-25"></i>
+                    No hay conceptos registrados.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

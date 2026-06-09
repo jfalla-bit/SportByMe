@@ -1,0 +1,150 @@
+with open('core/views.py', 'rb') as f:
+    content = f.read().decode('utf-8')
+
+# ── 1. ent_mensajes — agregar filtros ─────────────────────────────────────────
+old1 = (
+    "def ent_mensajes(request):\r\n"
+    "    mensajes  = Notificacion.objects.filter(usuario=request.user).order_by('-creado')\r\n"
+    "    no_leidos = mensajes.filter(leida=False).count()\r\n"
+    "    return render(request, 'entrenador/mensajes.html', {\r\n"
+    "        'mensajes': mensajes, 'no_leidos': no_leidos,\r\n"
+    "    })"
+)
+new1 = (
+    "def ent_mensajes(request):\r\n"
+    "\r\n"
+    "    qs = Notificacion.objects.filter(usuario=request.user).order_by('-creado')\r\n"
+    "\r\n"
+    "    tipo        = request.GET.get('tipo', '')\r\n"
+    "    leida       = request.GET.get('leida', '')\r\n"
+    "    fecha_desde = request.GET.get('fecha_desde', '')\r\n"
+    "    fecha_hasta = request.GET.get('fecha_hasta', '')\r\n"
+    "\r\n"
+    "    TIPOS_NOTIF = [\r\n"
+    "        ('entrenamiento', 'Entrenamiento'),\r\n"
+    "        ('partido',       'Partido'),\r\n"
+    "        ('convocatoria',  'Convocatoria'),\r\n"
+    "        ('pago',          'Pago'),\r\n"
+    "        ('mensaje',       'Mensaje'),\r\n"
+    "    ]\r\n"
+    "    if tipo:        qs = qs.filter(asunto__icontains=tipo)\r\n"
+    "    if leida == '1': qs = qs.filter(leida=True)\r\n"
+    "    elif leida == '0': qs = qs.filter(leida=False)\r\n"
+    "    if fecha_desde: qs = qs.filter(creado__date__gte=fecha_desde)\r\n"
+    "    if fecha_hasta: qs = qs.filter(creado__date__lte=fecha_hasta)\r\n"
+    "\r\n"
+    "    no_leidos = Notificacion.objects.filter(usuario=request.user, leida=False).count()\r\n"
+    "    paginator = Paginator(qs, 15)\r\n"
+    "    page = paginator.get_page(request.GET.get('page'))\r\n"
+    "    return render(request, 'entrenador/mensajes.html', {\r\n"
+    "        'mensajes': page, 'no_leidos': no_leidos,\r\n"
+    "        'tipo': tipo, 'leida': leida,\r\n"
+    "        'fecha_desde': fecha_desde, 'fecha_hasta': fecha_hasta,\r\n"
+    "        'tipos_notif': TIPOS_NOTIF,\r\n"
+    "    })"
+)
+assert old1 in content, "NO ENCONTRADO: bloque 1"
+content = content.replace(old1, new1, 1)
+print("OK 1 - ent_mensajes")
+
+# ── 2. dep_mensajes — agregar filtros ─────────────────────────────────────────
+old2 = (
+    "def dep_mensajes(request):\r\n"
+    "    mensajes  = Notificacion.objects.filter(usuario=request.user).order_by('-creado')\r\n"
+    "    no_leidos = mensajes.filter(leida=False).count()\r\n"
+    "    return render(request, 'deportista/mensajes.html', {\r\n"
+    "        'mensajes': mensajes, 'no_leidos': no_leidos,\r\n"
+    "    })"
+)
+new2 = (
+    "def dep_mensajes(request):\r\n"
+    "\r\n"
+    "    qs = Notificacion.objects.filter(usuario=request.user).order_by('-creado')\r\n"
+    "\r\n"
+    "    tipo        = request.GET.get('tipo', '')\r\n"
+    "    leida       = request.GET.get('leida', '')\r\n"
+    "    fecha_desde = request.GET.get('fecha_desde', '')\r\n"
+    "    fecha_hasta = request.GET.get('fecha_hasta', '')\r\n"
+    "\r\n"
+    "    TIPOS_NOTIF = [\r\n"
+    "        ('entrenamiento', 'Entrenamiento'),\r\n"
+    "        ('partido',       'Partido'),\r\n"
+    "        ('convocatoria',  'Convocatoria'),\r\n"
+    "        ('pago',          'Pago'),\r\n"
+    "        ('mensaje',       'Mensaje'),\r\n"
+    "    ]\r\n"
+    "    if tipo:        qs = qs.filter(asunto__icontains=tipo)\r\n"
+    "    if leida == '1': qs = qs.filter(leida=True)\r\n"
+    "    elif leida == '0': qs = qs.filter(leida=False)\r\n"
+    "    if fecha_desde: qs = qs.filter(creado__date__gte=fecha_desde)\r\n"
+    "    if fecha_hasta: qs = qs.filter(creado__date__lte=fecha_hasta)\r\n"
+    "\r\n"
+    "    no_leidos = Notificacion.objects.filter(usuario=request.user, leida=False).count()\r\n"
+    "    paginator = Paginator(qs, 15)\r\n"
+    "    page = paginator.get_page(request.GET.get('page'))\r\n"
+    "    return render(request, 'deportista/mensajes.html', {\r\n"
+    "\r\n"
+    "        'mensajes': page, 'no_leidos': no_leidos,\r\n"
+    "        'tipo': tipo, 'leida': leida,\r\n"
+    "        'fecha_desde': fecha_desde, 'fecha_hasta': fecha_hasta,\r\n"
+    "        'tipos_notif': TIPOS_NOTIF,\r\n"
+    "    })"
+)
+assert old2 in content, "NO ENCONTRADO: bloque 2"
+content = content.replace(old2, new2, 1)
+print("OK 2 - dep_mensajes")
+
+# ── 3. Agregar admin_notificaciones justo antes de dep_mensajes_leer_todos ────
+old3 = "@solo_deportista\r\ndef dep_mensajes_leer_todos(request):"
+new3 = (
+    "@solo_admin\r\n"
+    "def admin_notificaciones(request):\r\n"
+    "    \"\"\"Lista de notificaciones recibidas por el administrador con filtros.\"\"\"\r\n"
+    "    qs = Notificacion.objects.filter(usuario=request.user).order_by('-creado')\r\n"
+    "\r\n"
+    "    tipo        = request.GET.get('tipo', '')\r\n"
+    "    leida       = request.GET.get('leida', '')\r\n"
+    "    fecha_desde = request.GET.get('fecha_desde', '')\r\n"
+    "    fecha_hasta = request.GET.get('fecha_hasta', '')\r\n"
+    "\r\n"
+    "    TIPOS_NOTIF = [\r\n"
+    "        ('entrenamiento', 'Entrenamiento'),\r\n"
+    "        ('partido',       'Partido'),\r\n"
+    "        ('convocatoria',  'Convocatoria'),\r\n"
+    "        ('pago',          'Pago'),\r\n"
+    "        ('mensaje',       'Mensaje'),\r\n"
+    "    ]\r\n"
+    "    if tipo:         qs = qs.filter(asunto__icontains=tipo)\r\n"
+    "    if leida == '1': qs = qs.filter(leida=True)\r\n"
+    "    elif leida == '0': qs = qs.filter(leida=False)\r\n"
+    "    if fecha_desde:  qs = qs.filter(creado__date__gte=fecha_desde)\r\n"
+    "    if fecha_hasta:  qs = qs.filter(creado__date__lte=fecha_hasta)\r\n"
+    "\r\n"
+    "    no_leidos = Notificacion.objects.filter(usuario=request.user, leida=False).count()\r\n"
+    "    paginator = Paginator(qs, 15)\r\n"
+    "    page = paginator.get_page(request.GET.get('page'))\r\n"
+    "    return render(request, 'panel/notificaciones.html', {\r\n"
+    "        'mensajes': page, 'no_leidos': no_leidos,\r\n"
+    "        'tipo': tipo, 'leida': leida,\r\n"
+    "        'fecha_desde': fecha_desde, 'fecha_hasta': fecha_hasta,\r\n"
+    "        'tipos_notif': TIPOS_NOTIF,\r\n"
+    "    })\r\n"
+    "\r\n"
+    "\r\n"
+    "@solo_admin\r\n"
+    "def admin_notificaciones_leer_todos(request):\r\n"
+    "    Notificacion.objects.filter(usuario=request.user, leida=False).update(leida=True)\r\n"
+    "    return HttpResponseRedirect('/panel/notificaciones/')\r\n"
+    "\r\n"
+    "\r\n"
+    "@solo_deportista\r\n"
+    "def dep_mensajes_leer_todos(request):"
+)
+assert old3 in content, "NO ENCONTRADO: bloque 3"
+content = content.replace(old3, new3, 1)
+print("OK 3 - admin_notificaciones")
+
+with open('core/views.py', 'wb') as f:
+    f.write(content.encode('utf-8'))
+
+print("DONE")

@@ -1,0 +1,100 @@
+{% extends 'panel/base_panel.html' %}
+{% block title %}Estadísticas por Jugador{% endblock %}
+{% block nav_partidos %}active{% endblock %}
+{% block page_title %}Estadísticas por Jugador{% endblock %}
+{% block content %}
+
+<div class="content-card mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0"><i class="fas fa-user me-2 text-success"></i>Por Jugador</h6>
+        <a href="/panel/estadisticas/" class="btn btn-outline-success btn-sm">
+            <i class="fas fa-futbol me-1"></i>Ver por Equipo
+        </a>
+    </div>
+    <form method="get" class="row g-2">
+        <div class="col-md-4">
+            <select name="equipo" id="sel-equipo" class="form-select form-select-sm">
+                <option value="">Seleccionar equipo...</option>
+                {% for e in equipos %}
+                <option value="{{ e.id }}" {% if equipo_id == e.id|stringformat:"s" %}selected{% endif %}>{{ e.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-5">
+            <select name="jugador" class="form-select form-select-sm">
+                <option value="">{% if equipo_id %}Seleccionar jugador...{% else %}Primero seleccioná un equipo{% endif %}</option>
+                {% for j in jugadores %}
+                <option value="{{ j.id }}" {% if jug_id == j.id|stringformat:"s" %}selected{% endif %}>
+                    {{ j.usuario.get_full_name|default:j.usuario.username }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3 d-flex gap-1">
+            <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-search me-1"></i>Ver</button>
+            <a href="/panel/estadisticas/jugador/" class="btn btn-outline-secondary btn-sm"><i class="fas fa-times"></i></a>
+        </div>
+    </form>
+</div>
+
+{% if jugador %}
+<div class="content-card mb-4">
+    <h6 class="fw-bold mb-1">{{ jugador.usuario.get_full_name|default:jugador.usuario.username }}</h6>
+    <p class="text-muted small mb-3">
+        <i class="fas fa-shield-alt me-1"></i>{{ jugador.equipo.nombre|default:"Sin equipo" }}
+        &nbsp;|&nbsp;<i class="fas fa-running me-1"></i>{{ jugador.posicion|default:"Sin posición" }}
+    </p>
+
+    {% if totales %}
+    <div class="row g-2 mb-4">
+        <div class="col-md-2"><div class="card border-start border-success border-4 shadow-sm"><div class="card-body py-2 text-center"><div class="text-muted small">Goles</div><div class="fs-4 fw-bold text-success">{{ totales.total_goles|default:0 }}</div></div></div></div>
+        <div class="col-md-2"><div class="card border-start border-primary border-4 shadow-sm"><div class="card-body py-2 text-center"><div class="text-muted small">Asistencias</div><div class="fs-4 fw-bold text-primary">{{ totales.total_asistencias|default:0 }}</div></div></div></div>
+        <div class="col-md-2"><div class="card border-start border-warning border-4 shadow-sm"><div class="card-body py-2 text-center"><div class="text-muted small">Amarillas</div><div class="fs-4 fw-bold text-warning">{{ totales.total_amarillas|default:0 }}</div></div></div></div>
+        <div class="col-md-2"><div class="card border-start border-danger border-4 shadow-sm"><div class="card-body py-2 text-center"><div class="text-muted small">Rojas</div><div class="fs-4 fw-bold text-danger">{{ totales.total_rojas|default:0 }}</div></div></div></div>
+        <div class="col-md-4"><div class="card border-start border-secondary border-4 shadow-sm"><div class="card-body py-2 text-center"><div class="text-muted small">Calificación prom.</div><div class="fs-4 fw-bold">{% if totales.promedio_calif %}{{ totales.promedio_calif|floatformat:1 }}{% else %}—{% endif %}</div></div></div></div>
+    </div>
+    {% endif %}
+
+    {% if stats %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr><th>Partido</th><th>Fecha</th><th class="text-center">Resultado</th><th class="text-center">⚽</th><th class="text-center">🅰</th><th class="text-center">🟨</th><th class="text-center">🟥</th><th class="text-center">⭐</th></tr>
+            </thead>
+            <tbody>
+                {% for s in stats %}
+                <tr>
+                    <td><strong>{{ s.partido.equipo_propio.nombre }}</strong> vs {{ s.partido.equipo_rival }}</td>
+                    <td class="small">{{ s.partido.fecha|date:"d/m/Y" }}</td>
+                    <td class="text-center">
+                        {% if s.partido.goles_favor is not None %}
+                        <span class="badge bg-dark">{{ s.partido.goles_favor }} — {{ s.partido.goles_contra }}</span>
+                        {% else %}<span class="text-muted small">—</span>{% endif %}
+                    </td>
+                    <td class="text-center">{% if s.goles %}<strong class="text-success">{{ s.goles }}</strong>{% else %}—{% endif %}</td>
+                    <td class="text-center">{% if s.asistencias %}<strong class="text-primary">{{ s.asistencias }}</strong>{% else %}—{% endif %}</td>
+                    <td class="text-center">{% if s.tarjeta_amarilla %}<span class="badge bg-warning text-dark">🟨</span>{% else %}—{% endif %}</td>
+                    <td class="text-center">{% if s.tarjeta_roja %}<span class="badge bg-danger">🟥</span>{% else %}—{% endif %}</td>
+                    <td class="text-center">{% if s.calificacion %}<strong>{{ s.calificacion }}</strong>{% else %}—{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-muted text-center py-3">No hay estadísticas registradas para este jugador.</p>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('sel-equipo').addEventListener('change', function() {
+    const params = new URLSearchParams(window.location.search);
+    params.set('equipo', this.value);
+    params.delete('jugador');
+    window.location.search = params.toString();
+});
+</script>
+{% endblock %}

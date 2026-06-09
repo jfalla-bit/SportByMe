@@ -1,0 +1,275 @@
+{% extends 'panel/base_panel.html' %}
+{% block title %}Reporte Financiero{% endblock %}
+{% block page_title %}Reporte Financiero{% endblock %}
+
+{% block content %}
+
+<!-- Filtros -->
+<div class="content-card mb-4">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-2">
+            <label class="form-label small fw-bold">Desde</label>
+            <input type="date" name="fecha_desde" value="{{ fecha_desde }}" class="form-control">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small fw-bold">Hasta</label>
+            <input type="date" name="fecha_hasta" value="{{ fecha_hasta }}" class="form-control">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small fw-bold">Estado</label>
+            <select name="estado" class="form-select">
+                <option value="">Todos</option>
+                {% for val, label in estados %}
+                <option value="{{ val }}" {% if estado == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small fw-bold">Equipo</label>
+            <select name="equipo" class="form-select">
+                <option value="">Todos</option>
+                {% for eq in equipos %}
+                <option value="{{ eq.id }}" {% if equipo_id == eq.id|stringformat:"s" %}selected{% endif %}>{{ eq.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small fw-bold">Concepto</label>
+            <select name="concepto" class="form-select">
+                <option value="">Todos</option>
+                {% for val, label in conceptos %}
+                <option value="{{ val }}" {% if concepto == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search me-1"></i>Filtrar</button>
+            <a href="/panel/reportes/financiero/" class="btn btn-outline-secondary"><i class="fas fa-times"></i></a>
+        </div>
+    </form>
+</div>
+
+<!-- Resumen de totales -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-start border-success border-4 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">Cobrado</div>
+                <div class="fs-3 fw-bold text-success">${{ total_pagado }}</div>
+                <div class="text-muted small">{{ count_pagado }} pago(s)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-start border-warning border-4 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">Pendiente</div>
+                <div class="fs-3 fw-bold text-warning">${{ total_pendiente }}</div>
+                <div class="text-muted small">{{ count_pendiente }} pago(s)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-start border-danger border-4 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">Vencido</div>
+                <div class="fs-3 fw-bold text-danger">${{ total_vencido }}</div>
+                <div class="text-muted small">{{ count_vencido }} pago(s)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-start border-info border-4 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">En Revisión</div>
+                <div class="fs-3 fw-bold text-info">${{ total_revision }}</div>
+                <div class="text-muted small">{{ count_revision }} pago(s)</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+
+    <!-- Gráfico flujo de ingresos por mes -->
+    {% if por_mes %}
+    <div class="col-12">
+        <div class="content-card">
+            <h6 class="fw-bold mb-3">
+                <i class="fas fa-chart-line me-2 text-primary"></i>Flujo de Ingresos por Periodo
+            </h6>
+            <canvas id="grafFlujo" height="80"></canvas>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Ingresos por periodo -->
+    <div class="col-md-5">
+        <div class="content-card h-100">
+            <h6 class="fw-bold mb-3">
+                <i class="fas fa-calendar-alt me-2 text-success"></i>Ingresos Cobrados por Mes
+            </h6>
+            {% if por_mes %}
+            <table class="table table-sm table-hover">
+                <thead class="table-light">
+                    <tr><th>Mes</th><th>Cantidad</th><th class="text-end">Total</th></tr>
+                </thead>
+                <tbody>
+                    {% for row in por_mes %}
+                    <tr>
+                        <td>{{ row.mes|date:"F Y" }}</td>
+                        <td><span class="badge bg-secondary">{{ row.cantidad }}</span></td>
+                        <td class="text-end fw-bold text-success">${{ row.total }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="table-light">
+                    <tr>
+                        <td colspan="2" class="fw-bold">Total cobrado</td>
+                        <td class="text-end fw-bold text-success">${{ total_pagado }}</td>
+                    </tr>
+                </tfoot>
+            </table>
+            {% else %}
+            <p class="text-muted text-center py-3">Sin ingresos cobrados en el periodo.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Próximos a vencer -->
+    <div class="col-md-7">
+        <div class="content-card h-100">
+            <h6 class="fw-bold mb-3">
+                <i class="fas fa-clock me-2 text-warning"></i>Próximos a Vencer (7 días)
+            </h6>
+            {% if proximos_vencer %}
+            <table class="table table-sm table-hover">
+                <thead class="table-light">
+                    <tr><th>Deportista</th><th>Descripción</th><th>Monto</th><th>Vence</th></tr>
+                </thead>
+                <tbody>
+                    {% for p in proximos_vencer %}
+                    <tr>
+                        <td>{{ p.jugador.usuario.get_full_name|default:p.jugador.usuario.username }}</td>
+                        <td class="small text-muted">{{ p.descripcion|truncatechars:30 }}</td>
+                        <td class="fw-bold">${{ p.monto }}</td>
+                        <td class="text-danger fw-semibold">{{ p.fecha_vencimiento|date:"d/m/Y" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-muted text-center py-3">Sin pagos próximos a vencer.</p>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<!-- Tabla de pagos / facturas -->
+<div class="content-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0">
+            <i class="fas fa-file-invoice-dollar me-2 text-primary"></i>
+            Detalle de Pagos — <span class="text-muted">{{ total_filtrados }} registro(s)</span>
+        </h6>
+        <div class="d-flex gap-2">
+            <a href="/panel/pdf/reporte_financiero/?{{ query_params }}" class="btn btn-danger btn-sm">
+                <i class="fas fa-file-pdf me-1"></i>PDF
+            </a>
+            <a href="/panel/csv/reporte_financiero/?{{ query_params }}" class="btn btn-success btn-sm">
+                <i class="fas fa-file-csv me-1"></i>CSV
+            </a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Deportista</th>
+                    <th>Equipo</th>
+                    <th>Concepto</th>
+                    <th>Descripción</th>
+                    <th>Monto</th>
+                    <th>Vencimiento</th>
+                    <th>Fecha Pago</th>
+                    <th>Método</th>
+                    <th>Estado</th>
+                    <th>Factura</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in pagos %}
+                <tr class="{% if p.estado == 'pagado' %}table-success bg-opacity-10{% elif p.estado == 'vencido' %}table-danger{% elif p.estado == 'en_revision' %}table-warning bg-opacity-25{% endif %}">
+                    <td>
+                        <div class="fw-semibold small">{{ p.jugador.usuario.get_full_name|default:p.jugador.usuario.username }}</div>
+                        <div class="text-muted" style="font-size:.72rem">Doc: {{ p.jugador.usuario.documento|default:"—" }}</div>
+                    </td>
+                    <td class="small">{{ p.jugador.equipo.nombre|default:"—" }}</td>
+                    <td class="small">{{ p.get_concepto_display }}</td>
+                    <td class="small">{{ p.descripcion|truncatechars:30 }}</td>
+                    <td class="fw-bold">${{ p.monto }}</td>
+                    <td class="small {% if p.estado == 'vencido' %}text-danger fw-semibold{% endif %}">
+                        {{ p.fecha_vencimiento|date:"d/m/Y" }}
+                    </td>
+                    <td class="small text-muted">
+                        {% if p.fecha_pago %}{{ p.fecha_pago|date:"d/m/Y" }}{% else %}—{% endif %}
+                    </td>
+                    <td class="small text-muted">
+                        {% if p.metodo_pago %}{{ p.get_metodo_pago_display }}{% else %}—{% endif %}
+                    </td>
+                    <td>
+                        <span class="badge {% if p.estado == 'pagado' %}bg-success{% elif p.estado == 'vencido' %}bg-danger{% elif p.estado == 'en_revision' %}bg-info text-dark{% else %}bg-warning text-dark{% endif %}">
+                            {{ p.get_estado_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <a href="/panel/pagos/{{ p.id }}/factura/" target="_blank"
+                           class="btn btn-outline-primary btn-sm" title="Descargar Factura PDF">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="10" class="text-center text-muted py-4">
+                        <i class="fas fa-search me-2"></i>No se encontraron registros con los filtros aplicados.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+{% if por_mes %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+new Chart(document.getElementById('grafFlujo'), {
+    type: 'bar',
+    data: {
+        labels: [{% for row in por_mes %}"{{ row.mes|date:'M Y' }}"{% if not forloop.last %},{% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Ingresos cobrados ($)',
+            data:  [{% for row in por_mes %}{{ row.total }}{% if not forloop.last %},{% endif %}{% endfor %}],
+            backgroundColor: 'rgba(25,135,84,0.7)',
+            borderColor: 'rgba(25,135,84,1)',
+            borderWidth: 1,
+            borderRadius: 4,
+        }]
+    },
+    options: {
+        scales: {
+            y: { beginAtZero: true, title: { display: true, text: 'Monto ($)' } },
+            x: { title: { display: true, text: 'Mes' } }
+        },
+        plugins: { legend: { display: false } }
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

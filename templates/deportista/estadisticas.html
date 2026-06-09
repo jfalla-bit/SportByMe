@@ -1,0 +1,161 @@
+{% extends 'deportista/base_deportista.html' %}
+{% block title %}Mis Estadísticas{% endblock %}
+{% block nav_estadisticas %}active{% endblock %}
+{% block page_title %}Mis Estadísticas Deportivas{% endblock %}
+
+{% block content %}
+{% if not jugador %}
+<div class="content-card text-center py-5">
+    <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+    <h5 class="text-muted">Tu perfil de jugador aún no está configurado</h5>
+    <p class="text-muted">Contacta a tu entrenador o administrador para que te asignen a un equipo.</p>
+</div>
+{% else %}
+
+<!-- Tarjetas de resumen -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-2">
+        <div class="card border-start border-success border-4 shadow-sm">
+            <div class="card-body py-3 text-center">
+                <div class="text-muted small">Goles</div>
+                <div class="fs-3 fw-bold text-success">{{ totales.total_goles|default:0 }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="card border-start border-primary border-4 shadow-sm">
+            <div class="card-body py-3 text-center">
+                <div class="text-muted small">Asistencias</div>
+                <div class="fs-3 fw-bold text-primary">{{ totales.total_asistencias|default:0 }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="card border-start border-warning border-4 shadow-sm">
+            <div class="card-body py-3 text-center">
+                <div class="text-muted small">Amarillas</div>
+                <div class="fs-3 fw-bold text-warning">{{ totales.total_amarillas|default:0 }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="card border-start border-danger border-4 shadow-sm">
+            <div class="card-body py-3 text-center">
+                <div class="text-muted small">Rojas</div>
+                <div class="fs-3 fw-bold text-danger">{{ totales.total_rojas|default:0 }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="card border-start border-secondary border-4 shadow-sm">
+            <div class="card-body py-3 text-center">
+                <div class="text-muted small">Calif. prom.</div>
+                <div class="fs-3 fw-bold">
+                    {% if totales.promedio_calif %}{{ totales.promedio_calif|floatformat:1 }}{% else %}—{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-2">
+        <div class="card border-start border-info border-4 shadow-sm">
+            <div class="card-body py-3 text-center">
+                <div class="text-muted small">Partidos jugados</div>
+                <div class="fs-3 fw-bold text-info">{{ total_partidos }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Participación -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="content-card">
+            <h6 class="fw-bold mb-3"><i class="fas fa-percentage me-2 text-warning"></i>Participación</h6>
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="small text-muted">Partidos jugados / Convocatorias recibidas</span>
+                <strong>{{ total_partidos }} / {{ total_convocado }}</strong>
+            </div>
+            <div class="progress" style="height:14px;">
+                <div class="progress-bar bg-warning" role="progressbar"
+                     style="width:{{ pct_participacion }}%"
+                     aria-valuenow="{{ pct_participacion }}" aria-valuemin="0" aria-valuemax="100">
+                    {{ pct_participacion }}%
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="content-card">
+            <h6 class="fw-bold mb-3"><i class="fas fa-shoe-prints me-2 text-success"></i>Aporte ofensivo</h6>
+            <div class="row text-center">
+                <div class="col-6">
+                    <div class="text-muted small mb-1">Goles por partido</div>
+                    <div class="fs-4 fw-bold text-success">
+                        {% if total_partidos %}{{ totales.total_goles|default:0|floatformat:2 }}{% else %}—{% endif %}
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="text-muted small mb-1">Asistencias por partido</div>
+                    <div class="fs-4 fw-bold text-primary">
+                        {% if total_partidos %}{{ totales.total_asistencias|default:0|floatformat:2 }}{% else %}—{% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detalle por partido -->
+<div class="content-card">
+    <h6 class="fw-bold mb-3">
+        <i class="fas fa-list me-2 text-secondary"></i>Detalle por partido
+    </h6>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle table-sm">
+            <thead class="table-light">
+                <tr>
+                    <th>Partido</th>
+                    <th>Fecha</th>
+                    <th class="text-center">Resultado</th>
+                    <th class="text-center">⚽</th>
+                    <th class="text-center">🅰</th>
+                    <th class="text-center">🟨</th>
+                    <th class="text-center">🟥</th>
+                    <th class="text-center">⭐ Calif.</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in stats %}
+                <tr>
+                    <td class="small">
+                        <strong>{{ s.partido.equipo_propio.nombre }}</strong>
+                        <span class="text-muted"> vs {{ s.partido.equipo_rival }}</span>
+                    </td>
+                    <td class="small text-muted">{{ s.partido.fecha|date:"d/m/Y" }}</td>
+                    <td class="text-center">
+                        {% if s.partido.goles_favor is not None %}
+                            {% if s.partido.goles_favor > s.partido.goles_contra %}
+                            <span class="badge bg-success">{{ s.partido.goles_favor }}-{{ s.partido.goles_contra }}</span>
+                            {% elif s.partido.goles_favor < s.partido.goles_contra %}
+                            <span class="badge bg-danger">{{ s.partido.goles_favor }}-{{ s.partido.goles_contra }}</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ s.partido.goles_favor }}-{{ s.partido.goles_contra }}</span>
+                            {% endif %}
+                        {% else %}<span class="text-muted small">—</span>{% endif %}
+                    </td>
+                    <td class="text-center">{% if s.goles %}<strong class="text-success">{{ s.goles }}</strong>{% else %}—{% endif %}</td>
+                    <td class="text-center">{% if s.asistencias %}<strong class="text-primary">{{ s.asistencias }}</strong>{% else %}—{% endif %}</td>
+                    <td class="text-center">{% if s.tarjeta_amarilla %}<span class="badge bg-warning text-dark">🟨</span>{% else %}—{% endif %}</td>
+                    <td class="text-center">{% if s.tarjeta_roja %}<span class="badge bg-danger">🟥</span>{% else %}—{% endif %}</td>
+                    <td class="text-center">{% if s.calificacion %}<strong>{{ s.calificacion }}</strong>{% else %}—{% endif %}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8" class="text-center text-muted py-4">Sin estadísticas registradas aún.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endif %}
+{% endblock %}

@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block title %}Mi Perfil{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card">
+            <div class="card-header">
+                <h4>Mi Perfil</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Usuario:</strong> {{ user.username }}</p>
+                        <p><strong>Nombre:</strong> {{ user.first_name }} {{ user.last_name }}</p>
+                        <p><strong>Email:</strong> {{ user.email }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Rol:</strong> 
+                            <span class="badge 
+                                {% if user.role == 'administrador' %}bg-danger
+                                {% elif user.role == 'entrenador' %}bg-warning
+                                {% else %}bg-primary{% endif %}">
+                                {{ user.get_role_display }}
+                            </span>
+                        </p>
+                        <p><strong>Teléfono:</strong> {{ user.phone|default:"No especificado" }}</p>
+                        <p><strong>Fecha de nacimiento:</strong> {{ user.birth_date|default:"No especificada" }}</p>
+                    </div>
+                </div>
+                
+                <div class="mt-4">
+                    <a href="{% url 'auth:dashboard' %}" class="btn btn-primary">Volver al Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

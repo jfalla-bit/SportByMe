@@ -1,0 +1,88 @@
+{% extends 'entrenador/base_entrenador.html' %}
+{% block title %}Reporte de Entrenamientos{% endblock %}
+{% block nav_entrenamientos %}active{% endblock %}
+{% block page_title %}Reporte de Entrenamientos{% endblock %}
+
+{% block content %}
+<div class="content-card mb-4">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label small fw-bold">Buscar</label>
+            <input type="text" name="buscar" value="{{ buscar }}" class="form-control" placeholder="Título o cancha...">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small fw-bold">Equipo</label>
+            <select name="equipo" class="form-select">
+                <option value="">Todos</option>
+                {% for eq in equipos %}
+                <option value="{{ eq.id }}" {% if equipo_id == eq.id|stringformat:"s" %}selected{% endif %}>{{ eq.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small fw-bold">Desde</label>
+            <input type="date" name="fecha_desde" value="{{ fecha_desde }}" class="form-control">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small fw-bold">Hasta</label>
+            <input type="date" name="fecha_hasta" value="{{ fecha_hasta }}" class="form-control">
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-warning w-100"><i class="fas fa-search me-1"></i>Filtrar</button>
+            <a href="/entrenador/reportes/entrenamientos/" class="btn btn-outline-secondary"><i class="fas fa-times"></i></a>
+        </div>
+    </form>
+</div>
+
+<div class="content-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0">
+            <i class="fas fa-dumbbell me-2 text-warning"></i>
+            Entrenamientos — <span class="text-muted">{{ total_filtrados }} resultado(s)</span>
+        </h6>
+        <div class="d-flex gap-2">
+            <a href="/panel/pdf/reporte_entrenamientos/?{{ query_params }}" class="btn btn-danger btn-sm">
+                <i class="fas fa-file-pdf me-1"></i>PDF
+            </a>
+            <a href="/panel/csv/reporte_entrenamientos/?{{ query_params }}" class="btn btn-success btn-sm">
+                <i class="fas fa-file-csv me-1"></i>CSV
+            </a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Fecha</th>
+                    <th>Horario</th>
+                    <th>Título</th>
+                    <th>Equipo</th>
+                    <th>Categoría</th>
+                    <th>Entrenador</th>
+                    <th>Cancha / Lugar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in entrenamientos %}
+                <tr>
+                    <td>{{ e.fecha|date:"d/m/Y" }}</td>
+                    <td class="text-nowrap">{{ e.hora_inicio|time:"H:i" }} – {{ e.hora_fin|time:"H:i" }}</td>
+                    <td><strong>{{ e.titulo }}</strong></td>
+                    <td>{{ e.equipo.nombre }}</td>
+                    <td>{{ e.equipo.categoria.nombre }}</td>
+                    <td>{{ e.entrenador.get_full_name|default:"Sin asignar" }}</td>
+                    <td>{{ e.lugar|default:"—" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">
+                        <i class="fas fa-search me-2"></i>No se encontraron entrenamientos con los filtros aplicados.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

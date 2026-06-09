@@ -1,0 +1,52 @@
+{% extends 'entrenador/base_entrenador.html' %}
+{% block title %}Enviar Mensaje{% endblock %}
+{% block nav_mensajes %}active{% endblock %}
+{% block page_title %}Enviar Mensaje{% endblock %}
+
+{% block content %}
+<div class="content-card" style="max-width:700px;">
+    <h6 class="fw-bold mb-4">
+        <i class="fas fa-paper-plane me-2 text-warning"></i>Enviar mensaje a un usuario
+    </h6>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Destinatario</label>
+            <select name="usuario" class="form-select" required>
+                <option value="">Seleccionar usuario...</option>
+                {% for u in destinatarios %}
+                <option value="{{ u.id }}"
+                    {% if post_data.usuario == u.id|stringformat:"s" %}selected{% endif %}>
+                    {{ u.get_full_name|default:u.username }}
+                    ({{ u.get_role_display }})
+                </option>
+                {% endfor %}
+            </select>
+            <div class="form-text">Puedes enviar mensajes a tus deportistas y al administrador.</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Asunto</label>
+            <input type="text" name="asunto" class="form-control"
+                   placeholder="Asunto del mensaje"
+                   value="{{ post_data.asunto|default:'' }}" required>
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label fw-semibold">Mensaje</label>
+            <textarea name="mensaje" class="form-control" rows="7"
+                      placeholder="Escribe el mensaje aquí..." required>{{ post_data.mensaje|default:'' }}</textarea>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-warning">
+                <i class="fas fa-paper-plane me-2"></i>Enviar mensaje
+            </button>
+            <a href="/entrenador/mensajes/grupo/" class="btn btn-outline-warning">Envío grupal</a>
+            <a href="/entrenador/mensajes/" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

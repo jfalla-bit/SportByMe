@@ -1,0 +1,75 @@
+{% extends 'entrenador/base_entrenador.html' %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block nav_evaluaciones %}active{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+<div class="col-md-8">
+<div class="content-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h6 class="fw-bold mb-0"><i class="fas fa-star me-2 text-success"></i>{{ titulo }}</h6>
+        <a href="/entrenador/evaluaciones/" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i>Volver
+        </a>
+    </div>
+    <form method="post">
+        {% csrf_token %}
+        <div class="row g-3">
+            <div class="col-12">
+                <label class="form-label fw-semibold">Jugador *</label>
+                <select name="jugador" class="form-select" required>
+                    <option value="">Seleccionar jugador...</option>
+                    {% for j in jugadores %}
+                    <option value="{{ j.id }}" {% if evaluacion.jugador_id == j.id %}selected{% endif %}>
+                        {{ j.usuario.get_full_name|default:j.usuario.username }} — {{ j.equipo.nombre }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12">
+                <label class="form-label fw-semibold">Título *</label>
+                <input type="text" name="titulo" class="form-control" required
+                       placeholder="Ej: Evaluación mensual, Test de velocidad..."
+                       value="{{ evaluacion.titulo|default:'' }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Fecha *</label>
+                <input type="date" name="fecha" class="form-control" required
+                       value="{{ evaluacion.fecha|date:'Y-m-d'|default:'' }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Tipo de Evaluación *</label>
+                <select name="tipo" class="form-select" required>
+                    <option value="tecnica" {% if evaluacion.tipo == 'tecnica' or not evaluacion %}selected{% endif %}>Técnica</option>
+                    <option value="tactica" {% if evaluacion.tipo == 'tactica' %}selected{% endif %}>Táctica</option>
+                    <option value="fisica"  {% if evaluacion.tipo == 'fisica'  %}selected{% endif %}>Física</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Calificación (0-5)</label>
+                <input type="number" name="puntaje" class="form-control"
+                       min="0" max="5" step="0.1"
+                       placeholder="Opcional"
+                       value="{{ evaluacion.puntaje|default:'' }}">
+            </div>
+            <div class="col-12">
+                <label class="form-label fw-semibold">Descripción</label>
+                <textarea name="descripcion" class="form-control" rows="3"
+                          placeholder="Descripción de la evaluación...">{{ evaluacion.descripcion|default:'' }}</textarea>
+            </div>
+            <div class="col-12">
+                <label class="form-label fw-semibold">Observaciones</label>
+                <textarea name="observaciones" class="form-control" rows="3"
+                          placeholder="Observaciones adicionales...">{{ evaluacion.observaciones|default:'' }}</textarea>
+            </div>
+        </div>
+        <div class="mt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-success"><i class="fas fa-save me-1"></i>Guardar</button>
+            <a href="/entrenador/evaluaciones/" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+</div>
+</div>
+{% endblock %}

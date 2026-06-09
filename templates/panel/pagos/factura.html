@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<style>
+    @page { size: A4; margin: 2cm 2cm 2cm 2cm; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Helvetica, Arial, sans-serif; font-size: 10pt; color: #222; }
+
+    /* Encabezado */
+    .header { display: table; width: 100%; border-bottom: 3px solid #1a1a2e; padding-bottom: 12px; margin-bottom: 20px; }
+    .header-left  { display: table-cell; vertical-align: middle; }
+    .header-right { display: table-cell; text-align: right; vertical-align: middle; }
+    .org-name   { font-size: 20pt; font-weight: bold; color: #1a1a2e; }
+    .org-sub    { font-size: 9pt; color: #666; margin-top: 2px; }
+    .factura-title { font-size: 18pt; font-weight: bold; color: #1a1a2e; }
+    .factura-num   { font-size: 10pt; color: #555; margin-top: 4px; }
+
+    /* Secciones de datos */
+    .section { margin-bottom: 18px; }
+    .section-title { font-size: 9pt; font-weight: bold; text-transform: uppercase;
+                     letter-spacing: 0.5px; color: #fff; background: #1a1a2e;
+                     padding: 4px 10px; margin-bottom: 8px; }
+    .data-table { display: table; width: 100%; }
+    .data-row   { display: table-row; }
+    .data-label { display: table-cell; width: 38%; font-size: 9pt; color: #555;
+                  padding: 4px 0; vertical-align: top; }
+    .data-value { display: table-cell; font-size: 10pt; font-weight: bold;
+                  padding: 4px 0; vertical-align: top; }
+
+    /* Monto destacado */
+    .monto-box { border: 2px solid #1a1a2e; border-radius: 4px; padding: 12px 18px;
+                 display: table; width: 100%; margin: 18px 0; }
+    .monto-label { display: table-cell; font-size: 11pt; font-weight: bold; color: #1a1a2e;
+                   vertical-align: middle; }
+    .monto-value { display: table-cell; text-align: right; font-size: 22pt;
+                   font-weight: bold; color: #1a1a2e; vertical-align: middle; }
+
+    /* Badge de estado */
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 4px;
+             font-size: 9pt; font-weight: bold; }
+    .badge-pagado   { background: #198754; color: #fff; }
+    .badge-pendiente{ background: #ffc107; color: #000; }
+    .badge-vencido  { background: #dc3545; color: #fff; }
+    .badge-revision { background: #0dcaf0; color: #000; }
+
+    /* Pie */
+    .footer { margin-top: 30px; border-top: 1px solid #ccc; padding-top: 10px;
+              display: table; width: 100%; font-size: 8pt; color: #888; }
+    .footer-left  { display: table-cell; }
+    .footer-right { display: table-cell; text-align: right; }
+
+    .divider { border: none; border-top: 1px solid #e0e0e0; margin: 14px 0; }
+</style>
+</head>
+<body>
+
+<!-- ENCABEZADO -->
+<div class="header">
+    <div class="header-left">
+        <div class="org-name">&#9917; Sistema Deportivo</div>
+        <div class="org-sub">Comprobante de Pago</div>
+    </div>
+    <div class="header-right">
+        <div class="factura-title">FACTURA</div>
+        <div class="factura-num">N.° {{ pago.id }}</div>
+        <div class="factura-num">Emitida: {{ fecha_emision|date:"d/m/Y" }}</div>
+    </div>
+</div>
+
+<!-- DATOS DEL DEPORTISTA -->
+<div class="section">
+    <div class="section-title">Datos del Deportista</div>
+    <div class="data-table">
+        <div class="data-row">
+            <div class="data-label">Nombre completo:</div>
+            <div class="data-value">{{ pago.jugador.usuario.get_full_name|default:pago.jugador.usuario.username }}</div>
+        </div>
+        {% if pago.jugador.usuario.documento %}
+        <div class="data-row">
+            <div class="data-label">Documento:</div>
+            <div class="data-value">{{ pago.jugador.usuario.documento }}</div>
+        </div>
+        {% endif %}
+        {% if pago.jugador.usuario.email %}
+        <div class="data-row">
+            <div class="data-label">Email:</div>
+            <div class="data-value">{{ pago.jugador.usuario.email }}</div>
+        </div>
+        {% endif %}
+        {% if pago.jugador.equipo %}
+        <div class="data-row">
+            <div class="data-label">Equipo:</div>
+            <div class="data-value">{{ pago.jugador.equipo.nombre }} — {{ pago.jugador.equipo.categoria.nombre }}</div>
+        </div>
+        {% endif %}
+        {% if pago.jugador.posicion %}
+        <div class="data-row">
+            <div class="data-label">Posición:</div>
+            <div class="data-value">{{ pago.jugador.posicion }}</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- DETALLE DEL PAGO -->
+<div class="section">
+    <div class="section-title">Detalle del Pago</div>
+    <div class="data-table">
+        <div class="data-row">
+            <div class="data-label">Descripción:</div>
+            <div class="data-value">{{ pago.descripcion }}</div>
+        </div>
+        <div class="data-row">
+            <div class="data-label">Concepto:</div>
+            <div class="data-value">{{ pago.get_concepto_display }}</div>
+        </div>
+        <div class="data-row">
+            <div class="data-label">Estado:</div>
+            <div class="data-value">
+                <span class="badge {% if pago.estado == 'pagado' %}badge-pagado{% elif pago.estado == 'vencido' %}badge-vencido{% elif pago.estado == 'en_revision' %}badge-revision{% else %}badge-pendiente{% endif %}">
+                    {{ pago.get_estado_display }}
+                </span>
+            </div>
+        </div>
+        <div class="data-row">
+            <div class="data-label">Fecha de vencimiento:</div>
+            <div class="data-value">{{ pago.fecha_vencimiento|date:"d/m/Y" }}</div>
+        </div>
+        {% if pago.fecha_pago %}
+        <div class="data-row">
+            <div class="data-label">Fecha de pago:</div>
+            <div class="data-value">{{ pago.fecha_pago|date:"d/m/Y" }}</div>
+        </div>
+        {% endif %}
+        {% if pago.metodo_pago %}
+        <div class="data-row">
+            <div class="data-label">Método de pago:</div>
+            <div class="data-value">{{ pago.get_metodo_pago_display }}</div>
+        </div>
+        {% endif %}
+        {% if pago.registrado_por %}
+        <div class="data-row">
+            <div class="data-label">Registrado por:</div>
+            <div class="data-value">{{ pago.registrado_por.get_full_name|default:pago.registrado_por.username }}</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- MONTO TOTAL -->
+<div class="monto-box">
+    <div class="monto-label">TOTAL A PAGAR</div>
+    <div class="monto-value">${{ pago.monto }}</div>
+</div>
+
+<!-- PIE -->
+<div class="footer">
+    <div class="footer-left">Documento generado por: {{ emitido_por }}</div>
+    <div class="footer-right">{{ fecha_emision|date:"d/m/Y H:i" }}</div>
+</div>
+
+</body>
+</html>

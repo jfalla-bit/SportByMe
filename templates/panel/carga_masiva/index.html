@@ -1,0 +1,48 @@
+{% extends 'panel/base_panel.html' %}
+{% block title %}Carga Masiva{% endblock %}
+{% block page_title %}Carga Masiva de Datos{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+    {% for modulo, titulo, color, icono, url_carga in secciones %}
+    <div class="col-md-6">
+        <div class="content-card h-100">
+            <h6 class="fw-bold mb-3">
+                <i class="{{ icono }} me-2 text-{{ color }}"></i>{{ titulo }}
+            </h6>
+            <p class="text-muted small mb-3">
+                Descarga la plantilla, complétala y súbela para crear registros masivamente.
+            </p>
+            <a href="/panel/carga-masiva/plantilla/{{ modulo }}/"
+               class="btn btn-sm btn-outline-{{ color }} mb-3">
+                <i class="fas fa-download me-1"></i>Descargar plantilla Excel
+            </a>
+            <form method="post" action="{{ url_carga }}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="input-group">
+                    <input type="file" name="archivo" class="form-control form-control-sm"
+                           accept=".xlsx" required>
+                    <button class="btn btn-{{ color }} btn-sm" type="submit">
+                        <i class="fas fa-upload me-1"></i>Cargar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endfor %}
+
+</div>
+
+<div class="content-card mt-4">
+    <h6 class="fw-bold mb-3"><i class="fas fa-info-circle me-2 text-info"></i>Instrucciones</h6>
+    <ul class="small text-muted mb-0">
+        <li>Descarga la plantilla del módulo que deseas cargar.</li>
+        <li>Completa los datos respetando el formato de cada columna.</li>
+        <li><strong>Usuarios:</strong> role debe ser <code>administrador</code>, <code>entrenador</code> o <code>deportista</code>. equipo_nombre solo aplica para deportistas.</li>
+        <li><strong>Equipos:</strong> la categoría debe existir previamente en el sistema.</li>
+        <li><strong>Pagos:</strong> el deportista debe existir y tener perfil de jugador. concepto: <code>cuota_mensual</code>, <code>inscripcion</code>, <code>equipamiento</code>, <code>torneo</code>, <code>otro</code>.</li>
+        <li>Las filas con errores se omiten y se muestra un resumen al finalizar.</li>
+    </ul>
+</div>
+{% endblock %}

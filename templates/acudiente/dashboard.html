@@ -1,0 +1,136 @@
+{% extends 'acudiente/base_acudiente.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+{% block page_title %}Mi Dashboard{% endblock %}
+
+{% block content %}
+{% if notificaciones %}
+<div class="mb-4">
+    {% for n in notificaciones %}
+    <div class="alert alert-info alert-dismissible d-flex align-items-start gap-3" id="noti-{{ n.id }}">
+        <i class="fas fa-envelope-open-text fa-lg mt-1"></i>
+        <div class="flex-grow-1">
+            <strong>{{ n.asunto }}</strong>
+            <div class="mt-1">{{ n.mensaje|linebreaksbr }}</div>
+            <small class="text-muted">{{ n.creado|date:"d/m/Y H:i" }}</small>
+        </div>
+        <button type="button" class="btn-close" onclick="marcarLeida({{ n.id }})"></button>
+    </div>
+    {% endfor %}
+</div>
+<script>
+function marcarLeida(id) {
+    fetch('/notificacion/' + id + '/leer/', {method:'POST', headers:{'X-CSRFToken':'{{ csrf_token }}'}});
+    document.getElementById('noti-' + id).remove();
+}
+</script>
+{% endif %}
+
+{% if not acudiente %}
+<div class="content-card text-center py-5">
+    <i class="fas fa-user-clock fa-3x text-muted mb-3"></i>
+    <h5>Tu perfil de acudiente aún no está configurado</h5>
+    <p class="text-muted">Contacta al administrador para que te vincule al deportista a tu cargo.</p>
+</div>
+{% else %}
+
+<!-- Tarjetas resumen -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card stat-card {% if jugador %}bg-primary text-white{% else %}bg-light{% endif %}">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="fw-bold">{% if jugador %}{{ jugador.usuario.get_full_name|default:jugador.usuario.username }}{% else %}Sin deportista{% endif %}</div>
+                    <div class="small opacity-75">Deportista a cargo</div>
+                </div>
+                <i class="fas fa-running fa-2x opacity-50"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card {% if equipo %}bg-warning text-dark{% else %}bg-light{% endif %}">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="fw-bold">{% if equipo %}{{ equipo.nombre }}{% else %}Sin equipo{% endif %}</div>
+                    <div class="small opacity-75">Equipo</div>
+                </div>
+                <i class="fas fa-shield-alt fa-2x opacity-50"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card {% if categoria %}bg-success text-white{% else %}bg-light{% endif %}">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="fw-bold">{% if categoria %}{{ categoria.nombre }}{% else %}Sin categoría{% endif %}</div>
+                    <div class="small opacity-75">Categoría</div>
+                </div>
+                <i class="fas fa-tags fa-2x opacity-50"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Datos del deportista -->
+    <div class="col-md-5">
+        <div class="content-card">
+            <h6 class="fw-bold mb-3"><i class="fas fa-id-card me-2 text-primary"></i>Datos del Deportista</h6>
+            {% if jugador %}
+            <div class="info-row d-flex justify-content-between">
+                <span class="text-muted small">Nombre completo</span>
+                <strong>{{ jugador.usuario.get_full_name|default:"—" }}</strong>
+            </div>
+            <div class="info-row d-flex justify-content-between">
+                <span class="text-muted small">Documento</span>
+                <strong>{{ jugador.usuario.documento|default:"—" }}</strong>
+            </div>
+            <div class="info-row d-flex justify-content-between">
+                <span class="text-muted small">Posición</span>
+                <strong>{{ jugador.posicion|default:"No asignada" }}</strong>
+            </div>
+            <div class="info-row d-flex justify-content-between">
+                <span class="text-muted small">Estado</span>
+                <span class="badge {% if jugador.activo %}bg-success{% else %}bg-secondary{% endif %}">
+                    {% if jugador.activo %}Activo{% else %}Inactivo{% endif %}
+                </span>
+            </div>
+            {% if acudiente.parentesco %}
+            <div class="info-row d-flex justify-content-between">
+                <span class="text-muted small">Parentesco</span>
+                <strong>{{ acudiente.parentesco }}</strong>
+            </div>
+            {% endif %}
+            <div class="mt-3">
+                <a href="/acudiente/deportista/" class="btn btn-outline-primary btn-sm w-100">
+                    <i class="fas fa-eye me-1"></i>Ver información completa
+                </a>
+            </div>
+            {% else %}
+            <p class="text-muted text-center py-3 small">Sin deportista vinculado.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Próximos entrenamientos -->
+    <div class="col-md-7">
+        <div class="content-card">
+            <h6 class="fw-bold mb-3"><i class="fas fa-dumbbell me-2 text-warning"></i>Próximos Entrenamientos</h6>
+            {% for e in entrenamientos %}
+            <div class="border-bottom py-2">
+                <div class="fw-semibold small">{{ e.titulo }}</div>
+                <div class="text-muted small">
+                    <i class="fas fa-calendar me-1"></i>{{ e.fecha|date:"d/m/Y" }}
+                    &bull; {{ e.hora_inicio|time:"H:i" }} - {{ e.hora_fin|time:"H:i" }}
+                </div>
+                {% if e.lugar %}<div class="text-muted small"><i class="fas fa-map-marker-alt me-1"></i>{{ e.lugar }}</div>{% endif %}
+            </div>
+            {% empty %}
+            <p class="text-muted text-center py-3 small">Sin entrenamientos programados.</p>
+            {% endfor %}
+            <a href="/acudiente/calendario/" class="btn btn-outline-warning btn-sm w-100 mt-3">Ver calendario completo</a>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

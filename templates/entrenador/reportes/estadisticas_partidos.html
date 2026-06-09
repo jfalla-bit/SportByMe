@@ -1,0 +1,168 @@
+{% extends 'entrenador/base_entrenador.html' %}
+{% block title %}Estadísticas de Partidos{% endblock %}
+{% block page_title %}Estadísticas de Partidos{% endblock %}
+
+{% block content %}
+<div class="content-card mb-4">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-4">
+            <label class="form-label small fw-bold">Equipo</label>
+            <select name="equipo" class="form-select">
+                <option value="">Todos</option>
+                {% for eq in equipos %}
+                <option value="{{ eq.id }}" {% if equipo_id == eq.id|stringformat:"s" %}selected{% endif %}>{{ eq.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3 d-flex gap-2 align-items-end">
+            <button type="submit" class="btn btn-warning w-100"><i class="fas fa-search me-1"></i>Filtrar</button>
+            <a href="/entrenador/reportes/estadisticas-partidos/" class="btn btn-outline-secondary"><i class="fas fa-times"></i></a>
+        </div>
+    </form>
+</div>
+
+<!-- Tarjetas globales -->
+<div class="row g-3 mb-4">
+    <div class="col-md-2">
+        <div class="card border-start border-secondary border-4 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-muted small">Total</div>
+                <div class="fs-3 fw-bold">{{ total }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card border-start border-success border-4 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-muted small">Ganados</div>
+                <div class="fs-3 fw-bold text-success">{{ ganados }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card border-start border-danger border-4 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-muted small">Perdidos</div>
+                <div class="fs-3 fw-bold text-danger">{{ perdidos }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card border-start border-warning border-4 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-muted small">Empatados</div>
+                <div class="fs-3 fw-bold text-warning">{{ empatados }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card border-start border-primary border-4 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-muted small">Goles A Favor</div>
+                <div class="fs-3 fw-bold text-primary">{{ goles_favor }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card border-start border-info border-4 shadow-sm">
+            <div class="card-body text-center">
+                <div class="text-muted small">Goles En Contra</div>
+                <div class="fs-3 fw-bold text-info">{{ goles_contra }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if stats_equipos %}
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="content-card h-100">
+            <h6 class="fw-bold mb-3"><i class="fas fa-chart-bar me-2 text-warning"></i>Resultados por Equipo</h6>
+            <canvas id="grafResultados" height="220"></canvas>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="content-card h-100">
+            <h6 class="fw-bold mb-3"><i class="fas fa-futbol me-2 text-success"></i>Goles por Equipo</h6>
+            <canvas id="grafGoles" height="220"></canvas>
+        </div>
+    </div>
+</div>
+
+<div class="content-card">
+    <h6 class="fw-bold mb-3"><i class="fas fa-table me-2 text-info"></i>Detalle por Equipo</h6>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr><th>Equipo</th><th>PJ</th><th class="text-success">G</th><th class="text-danger">P</th><th class="text-warning">E</th><th>GF</th><th>GC</th><th>Dif.</th><th>% Victoria</th></tr>
+            </thead>
+            <tbody>
+                {% for s in stats_equipos %}
+                <tr>
+                    <td><strong>{{ s.equipo.nombre }}</strong></td>
+                    <td>{{ s.total }}</td>
+                    <td class="text-success fw-bold">{{ s.ganados }}</td>
+                    <td class="text-danger fw-bold">{{ s.perdidos }}</td>
+                    <td class="text-warning fw-bold">{{ s.empatados }}</td>
+                    <td>{{ s.goles_favor }}</td>
+                    <td>{{ s.goles_contra }}</td>
+                    <td class="{% if s.diferencia > 0 %}text-success{% elif s.diferencia < 0 %}text-danger{% endif %} fw-bold">
+                        {% if s.diferencia > 0 %}+{% endif %}{{ s.diferencia }}
+                    </td>
+                    <td>
+                        {% if s.total > 0 %}
+                        {% widthratio s.ganados s.total 100 as pct_vic %}
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="progress flex-grow-1" style="height:8px">
+                                <div class="progress-bar bg-success" style="width:{{ pct_vic }}%"></div>
+                            </div>
+                            <span class="fw-bold">{{ pct_vic }}%</span>
+                        </div>
+                        {% else %}—{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="content-card text-center text-muted py-5">
+    <i class="fas fa-futbol fa-2x mb-2 opacity-25"></i>
+    <p>No hay partidos con resultado registrado.</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+{% if stats_equipos %}
+new Chart(document.getElementById('grafResultados'), {
+    type: 'bar',
+    data: {
+        labels: {{ eq_nombres|safe }},
+        datasets: [
+            { label: 'Ganados',   data: {{ eq_ganados|safe }},   backgroundColor: 'rgba(25,135,84,0.7)' },
+            { label: 'Perdidos',  data: {{ eq_perdidos|safe }},  backgroundColor: 'rgba(220,53,69,0.7)' },
+            { label: 'Empatados', data: {{ eq_empatados|safe }}, backgroundColor: 'rgba(255,193,7,0.7)' },
+        ]
+    },
+    options: { scales: { y: { beginAtZero: true } } }
+});
+const gfData = [{% for s in stats_equipos %}{{ s.goles_favor }}{% if not forloop.last %},{% endif %}{% endfor %}];
+const gcData = [{% for s in stats_equipos %}{{ s.goles_contra }}{% if not forloop.last %},{% endif %}{% endfor %}];
+new Chart(document.getElementById('grafGoles'), {
+    type: 'bar',
+    data: {
+        labels: {{ eq_nombres|safe }},
+        datasets: [
+            { label: 'Goles a favor',   data: gfData, backgroundColor: 'rgba(13,110,253,0.7)' },
+            { label: 'Goles en contra', data: gcData, backgroundColor: 'rgba(220,53,69,0.5)' },
+        ]
+    },
+    options: { scales: { y: { beginAtZero: true } } }
+});
+{% endif %}
+</script>
+{% endblock %}

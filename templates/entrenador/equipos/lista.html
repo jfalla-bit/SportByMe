@@ -1,0 +1,46 @@
+{% extends 'entrenador/base_entrenador.html' %}
+{% block title %}Mis Equipos{% endblock %}
+{% block nav_equipos %}active{% endblock %}
+{% block page_title %}Mis Equipos{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+    {% for equipo in equipos %}
+    <div class="col-md-6">
+        <div class="card stat-card h-100">
+            <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                <h6 class="mb-0 fw-bold"><i class="fas fa-shield-alt me-2"></i>{{ equipo.nombre }}</h6>
+                <span class="badge bg-dark">{{ equipo.categoria.nombre }}</span>
+            </div>
+            <div class="card-body">
+                <div class="row text-center mb-3">
+                    <div class="col-6">
+                        <div class="fs-3 fw-bold text-primary">{{ equipo.num_jugadores }}</div>
+                        <div class="text-muted small">Jugadores</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="fs-3 fw-bold text-success">
+                            {{ equipo.entrenamientos.count }}
+                        </div>
+                        <div class="text-muted small">Entrenamientos</div>
+                    </div>
+                </div>
+                <div class="d-grid">
+                    <a href="/entrenador/mis-equipos/{{ equipo.id }}/" class="btn btn-warning">
+                        <i class="fas fa-eye me-2"></i>Ver Detalle
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="content-card text-center py-5">
+            <i class="fas fa-shield-alt fa-3x text-muted mb-3"></i>
+            <h5 class="text-muted">No tienes equipos asignados</h5>
+            <p class="text-muted">Contacta al administrador para que te asigne un equipo.</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

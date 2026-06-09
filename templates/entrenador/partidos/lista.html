@@ -1,0 +1,86 @@
+{% extends 'entrenador/base_entrenador.html' %}
+{% block title %}Partidos{% endblock %}
+{% block nav_partidos %}active{% endblock %}
+{% block page_title %}Calendario de Partidos{% endblock %}
+{% block content %}
+<div class="content-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0"><i class="fas fa-futbol me-2 text-warning"></i>Partidos</h6>
+        <a href="/entrenador/partidos/crear/" class="btn btn-warning btn-sm"><i class="fas fa-plus me-1"></i>Nuevo Partido</a>
+    </div>
+
+    <form method="get" class="row g-2 mb-3 p-3 bg-light rounded">
+        <div class="col-md-4">
+            <select name="equipo" class="form-select form-select-sm">
+                <option value="">Todos mis equipos</option>
+                {% for e in equipos %}
+                <option value="{{ e.id }}" {% if equipo_id == e.id|stringformat:"s" %}selected{% endif %}>{{ e.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <input type="date" name="fecha_desde" class="form-control form-control-sm" value="{{ fecha_desde }}" title="Desde">
+        </div>
+        <div class="col-md-3">
+            <input type="date" name="fecha_hasta" class="form-control form-control-sm" value="{{ fecha_hasta }}" title="Hasta">
+        </div>
+        <div class="col-md-2 d-flex gap-1">
+            <button type="submit" class="btn btn-warning btn-sm"><i class="fas fa-search"></i></button>
+            <a href="/entrenador/partidos/" class="btn btn-outline-secondary btn-sm"><i class="fas fa-times"></i></a>
+        </div>
+    </form>
+
+    {% if equipo_id or fecha_desde or fecha_hasta %}
+    <div class="alert alert-info py-2 mb-3">
+        <i class="fas fa-filter me-1"></i><strong>{{ total }}</strong> partido(s) encontrado(s).
+    </div>
+    {% endif %}
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr><th>Equipo Propio</th><th>Rival</th><th>Fecha</th><th>Hora</th><th>Cancha</th><th>Resultado</th><th>Acciones</th></tr>
+            </thead>
+            <tbody>
+                {% for p in partidos %}
+                <tr>
+                    <td><span class="badge bg-warning text-dark">{{ p.equipo_propio.nombre }}</span></td>
+                    <td><strong>{{ p.equipo_rival }}</strong></td>
+                    <td class="small">{{ p.fecha|date:"d/m/Y" }}</td>
+                    <td class="small">{{ p.hora|time:"H:i" }}</td>
+                    <td class="small text-muted">{{ p.cancha|default:"—" }}</td>
+                    <td class="text-center">
+                        {% if p.goles_favor is not None and p.goles_contra is not None %}
+                        <span class="badge bg-dark fs-6 px-3">{{ p.goles_favor }} — {{ p.goles_contra }}</span>
+                        {% else %}
+                        <span class="text-muted small">Sin resultado</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="/entrenador/partidos/{{ p.id }}/convocatoria/"
+                           class="btn btn-outline-warning btn-action me-1" title="Convocatoria">
+                            <i class="fas fa-users"></i>
+                        </a>
+                        <a href="/entrenador/partidos/{{ p.id }}/resultado/"
+                           class="btn btn-outline-success btn-action me-1" title="Resultado">
+                            <i class="fas fa-clipboard-check"></i>
+                        </a>
+                        <a href="/entrenador/partidos/{{ p.id }}/estadisticas/"
+                           class="btn btn-outline-info btn-action me-1" title="Estadisticas">
+                            <i class="fas fa-chart-bar"></i>
+                        </a>
+                        <a href="/entrenador/partidos/{{ p.id }}/editar/"
+                           class="btn btn-outline-secondary btn-action me-1"><i class="fas fa-edit"></i></a>
+                        <a href="/entrenador/partidos/{{ p.id }}/eliminar/"
+                           class="btn btn-outline-danger btn-action"
+                           onclick="return confirm('¿Eliminar este partido?')"><i class="fas fa-trash"></i></a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center text-muted py-4">No hay partidos registrados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

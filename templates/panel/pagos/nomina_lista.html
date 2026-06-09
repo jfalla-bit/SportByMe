@@ -1,0 +1,152 @@
+{% extends 'panel/base_panel.html' %}
+{% block title %}Nómina Entrenadores{% endblock %}
+{% block nav_nomina %}active{% endblock %}
+{% block page_title %}Nómina de Entrenadores{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card border-start border-success border-4 shadow-sm">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small">Total Pagado</div>
+                    <div class="fs-3 fw-bold text-success">${{ total_pagado }}</div>
+                </div>
+                <i class="fas fa-check-circle fa-2x text-success opacity-25"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-start border-warning border-4 shadow-sm">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-muted small">Pendiente</div>
+                    <div class="fs-3 fw-bold text-warning">${{ total_pendiente }}</div>
+                </div>
+                <i class="fas fa-clock fa-2x text-warning opacity-25"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="content-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0"><i class="fas fa-user-tie me-2 text-primary"></i>Nómina Mensual</h6>
+        <a href="/panel/nomina/crear/" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus me-1"></i>Registrar Nómina
+        </a>
+    </div>
+
+    <form method="get" class="row g-2 mb-3 p-3 bg-light rounded">
+        <div class="col-md-4">
+            <select name="entrenador" class="form-select form-select-sm">
+                <option value="">Todos los entrenadores</option>
+                {% for e in entrenadores %}
+                <option value="{{ e.id }}" {% if entrenador_id == e.id|stringformat:"s" %}selected{% endif %}>
+                    {{ e.get_full_name|default:e.username }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select name="estado" class="form-select form-select-sm">
+                <option value="">Todos los estados</option>
+                {% for val, label in estados %}
+                <option value="{{ val }}" {% if estado == val %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <input type="number" name="anio" class="form-control form-control-sm"
+                   placeholder="Año" value="{{ anio }}">
+        </div>
+        <div class="col-md-3 d-flex gap-1">
+            <button type="submit" class="btn btn-primary btn-sm"><i class="fas fa-search"></i></button>
+            <a href="/panel/nomina/" class="btn btn-outline-secondary btn-sm"><i class="fas fa-times"></i></a>
+        </div>
+    </form>
+
+    {% if entrenador_id or estado or anio %}
+    <div class="alert alert-info py-2 mb-3">
+        <i class="fas fa-filter me-1"></i><strong>{{ total_filtrados }}</strong> registro(s) encontrado(s).
+    </div>
+    {% endif %}
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Entrenador</th>
+                    <th>Mes / Año</th>
+                    <th>Monto</th>
+                    <th>Método</th>
+                    <th>Fecha Pago</th>
+                    <th>Descripción</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for n in nominas %}
+                <tr class="{% if n.estado == 'pagado' %}table-success bg-opacity-10{% endif %}">
+                    <td><strong>{{ n.entrenador.get_full_name|default:n.entrenador.username }}</strong></td>
+                    <td>{{ n.mes|stringformat:"02d" }}/{{ n.anio }}</td>
+                    <td class="fw-bold">${{ n.monto }}</td>
+                    <td class="small text-muted">
+                        {% if n.metodo_pago %}{{ n.get_metodo_pago_display }}{% else %}—{% endif %}
+                    </td>
+                    <td class="small">
+                        {% if n.fecha_pago %}{{ n.fecha_pago|date:"d/m/Y" }}{% else %}<span class="text-muted">—</span>{% endif %}
+                    </td>
+                    <td class="small text-muted">{{ n.descripcion|truncatechars:30|default:"—" }}</td>
+                    <td>
+                        <span class="badge {% if n.estado == 'pagado' %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                            {{ n.get_estado_display }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if n.estado != 'pagado' %}
+                        <a href="/panel/nomina/{{ n.id }}/marcar-pagado/"
+                           class="btn btn-success btn-action me-1" title="Marcar como pagado"
+                           onclick="return confirm('¿Marcar como PAGADO?')">
+                            <i class="fas fa-check"></i>
+                        </a>
+                        {% endif %}
+                        <a href="/panel/nomina/{{ n.id }}/editar/"
+                           class="btn btn-outline-warning btn-action me-1" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <a href="/panel/nomina/{{ n.id }}/eliminar/"
+                           class="btn btn-outline-danger btn-action" title="Eliminar"
+                           onclick="return confirm('¿Eliminar este pago de nómina?')">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-2x mb-2 d-block opacity-25"></i>
+                        No hay pagos de nómina registrados.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if nominas.has_other_pages %}
+    <nav class="mt-3">
+        <ul class="pagination pagination-sm justify-content-center">
+            {% if nominas.has_previous %}
+            <li class="page-item"><a class="page-link" href="?page={{ nominas.previous_page_number }}&entrenador={{ entrenador_id }}&estado={{ estado }}&anio={{ anio }}">«</a></li>
+            {% endif %}
+            <li class="page-item active"><span class="page-link">{{ nominas.number }} / {{ nominas.paginator.num_pages }}</span></li>
+            {% if nominas.has_next %}
+            <li class="page-item"><a class="page-link" href="?page={{ nominas.next_page_number }}&entrenador={{ entrenador_id }}&estado={{ estado }}&anio={{ anio }}">»</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

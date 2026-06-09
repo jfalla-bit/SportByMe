@@ -1,0 +1,71 @@
+{% extends 'panel/base_panel.html' %}
+{% block title %}Partidos{% endblock %}
+{% block nav_partidos %}active{% endblock %}
+{% block page_title %}Calendario de Partidos{% endblock %}
+{% block content %}
+<div class="content-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0"><i class="fas fa-futbol me-2 text-success"></i>Partidos</h6>
+        <div class="d-flex gap-2">
+            <a href="/panel/estadisticas/" class="btn btn-outline-info btn-sm">
+                <i class="fas fa-chart-line me-1"></i>Estadísticas
+            </a>
+            <a href="/panel/partidos/crear/" class="btn btn-success btn-sm"><i class="fas fa-plus me-1"></i>Nuevo Partido</a>
+        </div>
+    </div>
+
+    <form method="get" class="row g-2 mb-3 p-3 bg-light rounded">
+        <div class="col-md-4">
+            <select name="equipo" class="form-select form-select-sm">
+                <option value="">Todos los equipos</option>
+                {% for e in equipos %}
+                <option value="{{ e.id }}" {% if equipo_id == e.id|stringformat:"s" %}selected{% endif %}>{{ e.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <input type="date" name="fecha_desde" class="form-control form-control-sm" value="{{ fecha_desde }}" title="Desde">
+        </div>
+        <div class="col-md-3">
+            <input type="date" name="fecha_hasta" class="form-control form-control-sm" value="{{ fecha_hasta }}" title="Hasta">
+        </div>
+        <div class="col-md-2 d-flex gap-1">
+            <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-search"></i></button>
+            <a href="/panel/partidos/" class="btn btn-outline-secondary btn-sm"><i class="fas fa-times"></i></a>
+        </div>
+    </form>
+
+    {% if equipo_id or fecha_desde or fecha_hasta %}
+    <div class="alert alert-info py-2 mb-3">
+        <i class="fas fa-filter me-1"></i><strong>{{ total }}</strong> partido(s) encontrado(s).
+    </div>
+    {% endif %}
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr><th>Equipo Propio</th><th>Rival</th><th>Fecha</th><th>Hora</th><th>Cancha</th><th>Descripción</th><th>Acciones</th></tr>
+            </thead>
+            <tbody>
+                {% for p in partidos %}
+                <tr>
+                    <td><span class="badge bg-success">{{ p.equipo_propio.nombre }}</span></td>
+                    <td><strong>{{ p.equipo_rival }}</strong></td>
+                    <td class="small">{{ p.fecha|date:"d/m/Y" }}</td>
+                    <td class="small">{{ p.hora|time:"H:i" }}</td>
+                    <td class="small text-muted">{{ p.cancha|default:"—" }}</td>
+                    <td class="small text-muted">{{ p.descripcion|truncatechars:40|default:"—" }}</td>
+                    <td>
+                        <a href="/panel/partidos/{{ p.id }}/editar/" class="btn btn-outline-warning btn-action me-1"><i class="fas fa-edit"></i></a>
+                        <a href="/panel/partidos/{{ p.id }}/eliminar/" class="btn btn-outline-danger btn-action"
+                           onclick="return confirm('¿Eliminar este partido?')"><i class="fas fa-trash"></i></a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center text-muted py-4">No hay partidos registrados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,91 @@
+{% extends 'acudiente/base_acudiente.html' %}
+{% block title %}Convocatorias{% endblock %}
+{% block nav_convocatorias %}active{% endblock %}
+{% block page_title %}Convocatorias del Deportista{% endblock %}
+
+{% block content %}
+{% if not jugador %}
+<div class="content-card text-center py-5">
+    <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+    <h5 class="text-muted">Sin deportista vinculado</h5>
+    <p class="text-muted">Contacta al administrador para que te vincule al deportista a tu cargo.</p>
+</div>
+{% else %}
+<div class="content-card">
+    <h6 class="fw-bold mb-3">
+        <i class="fas fa-clipboard-list me-2 text-success"></i>
+        Convocatorias de {{ jugador.usuario.get_full_name|default:jugador.usuario.username }}
+        <span class="badge bg-success ms-1">{{ convocatorias_data|length }}</span>
+    </h6>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Partido</th>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Cancha</th>
+                    <th>Equipo</th>
+                    <th>Nota del entrenador</th>
+                    <th class="text-center">Resultado</th>
+                    <th class="text-center">Participación</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in convocatorias_data %}
+                <tr>
+                    <td>
+                        <strong>{{ item.conv.partido.equipo_propio.nombre }}</strong>
+                        <span class="text-muted small"> vs {{ item.conv.partido.equipo_rival }}</span>
+                    </td>
+                    <td class="small">{{ item.conv.partido.fecha|date:"d/m/Y" }}</td>
+                    <td class="small text-muted">{{ item.conv.partido.hora|time:"H:i" }}</td>
+                    <td class="small text-muted">{{ item.conv.partido.cancha|default:"—" }}</td>
+                    <td class="small">{{ item.conv.partido.equipo_propio.nombre }}</td>
+                    <td class="small text-muted">{{ item.conv.nota|default:"—"|truncatechars:60 }}</td>
+                    <td class="text-center">
+                        {% if item.conv.partido.goles_favor is not None %}
+                        <span class="badge bg-dark">{{ item.conv.partido.goles_favor }} — {{ item.conv.partido.goles_contra }}</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Por jugar</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        {% if item.respuesta %}
+                        <span class="badge {% if item.respuesta == 'confirmado' %}bg-success{% else %}bg-danger{% endif %} mb-1">
+                            {% if item.respuesta == 'confirmado' %}
+                            <i class="fas fa-check me-1"></i>Confirmado
+                            {% else %}
+                            <i class="fas fa-times me-1"></i>Rechazado
+                            {% endif %}
+                        </span><br>
+                        {% endif %}
+                        {% if not item.conv.partido.goles_favor %}
+                        <div class="d-flex gap-1 justify-content-center flex-wrap mt-1">
+                            <form method="post" action="/acudiente/convocatorias/{{ item.conv.id }}/responder/">
+                                {% csrf_token %}
+                                <input type="hidden" name="respuesta" value="confirmado">
+                                <button type="submit" class="btn btn-success btn-sm">
+                                    <i class="fas fa-check"></i> Confirmar
+                                </button>
+                            </form>
+                            <form method="post" action="/acudiente/convocatorias/{{ item.conv.id }}/responder/">
+                                {% csrf_token %}
+                                <input type="hidden" name="respuesta" value="rechazado">
+                                <button type="submit" class="btn btn-outline-danger btn-sm">
+                                    <i class="fas fa-times"></i> Rechazar
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8" class="text-center text-muted py-4">El deportista no ha sido convocado a ningún partido aún.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

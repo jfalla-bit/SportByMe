@@ -1,0 +1,136 @@
+{% extends 'panel/base_panel.html' %}
+{% block title %}Finanzas{% endblock %}
+{% block nav_finanzas %}active{% endblock %}
+{% block page_title %}Gestión Financiera{% endblock %}
+
+{% block content %}
+<!-- Tarjetas de resumen -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card border-start border-success border-4 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">Total Ingresos {% if buscar or tipo or categoria or fecha_desde or fecha_hasta %}(filtrado){% endif %}</div>
+                <div class="fs-3 fw-bold text-success">${{ total_ingresos }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-start border-danger border-4 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">Total Egresos {% if buscar or tipo or categoria or fecha_desde or fecha_hasta %}(filtrado){% endif %}</div>
+                <div class="fs-3 fw-bold text-danger">${{ total_egresos }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-start border-primary border-4 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">Balance</div>
+                <div class="fs-3 fw-bold {% if balance >= 0 %}text-success{% else %}text-danger{% endif %}">${{ balance }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="content-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0"><i class="fas fa-dollar-sign me-2 text-success"></i>Movimientos</h6>
+        <a href="/panel/finanzas/crear/" class="btn btn-success btn-sm"><i class="fas fa-plus me-1"></i>Nuevo</a>
+    </div>
+
+    <!-- Filtros -->
+    <form method="get" class="row g-2 mb-3 p-3 bg-light rounded">
+        <div class="col-md-3">
+            <input type="text" name="buscar" class="form-control form-control-sm"
+                   placeholder="Buscar descripción..." value="{{ buscar }}">
+        </div>
+        <div class="col-md-2">
+            <select name="tipo" class="form-select form-select-sm">
+                <option value="">Todos los tipos</option>
+                {% for value, label in tipos %}
+                <option value="{{ value }}" {% if tipo == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="categoria" class="form-select form-select-sm">
+                <option value="">Todas las categorías</option>
+                {% for value, label in categorias %}
+                <option value="{{ value }}" {% if categoria == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <input type="date" name="fecha_desde" class="form-control form-control-sm"
+                   title="Desde" value="{{ fecha_desde }}">
+        </div>
+        <div class="col-md-2">
+            <input type="date" name="fecha_hasta" class="form-control form-control-sm"
+                   title="Hasta" value="{{ fecha_hasta }}">
+        </div>
+        <div class="col-md-1 d-flex gap-1">
+            <button type="submit" class="btn btn-success btn-sm">
+                <i class="fas fa-search"></i>
+            </button>
+            <a href="/panel/finanzas/" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-times"></i>
+            </a>
+            <a href="/panel/pdf/finanzas/?buscar={{ buscar }}&tipo={{ tipo }}&categoria={{ categoria }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}"
+               class="btn btn-outline-danger btn-sm" title="Exportar PDF">
+                <i class="fas fa-file-pdf"></i>
+            </a>
+        </div>
+    </form>
+
+    {% if buscar or tipo or categoria or fecha_desde or fecha_hasta %}
+    <div class="alert alert-info py-2 mb-3">
+        <i class="fas fa-filter me-1"></i>
+        <strong>{{ total_filtrados }}</strong> movimiento(s) encontrado(s).
+    </div>
+    {% endif %}
+
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr><th>Descripción</th><th>Tipo</th><th>Categoría</th><th>Monto</th><th>Fecha</th><th>Registrado por</th><th>Origen</th><th>Acciones</th></tr>
+        </thead>
+        <tbody>
+            {% for f in finanzas %}
+            <tr>
+                <td>{{ f.descripcion }}</td>
+                <td><span class="badge {% if f.tipo == 'ingreso' %}bg-success{% else %}bg-danger{% endif %}">{{ f.tipo }}</span></td>
+                <td class="small text-muted">{{ f.get_categoria_display }}</td>
+                <td class="fw-bold {% if f.tipo == 'ingreso' %}text-success{% else %}text-danger{% endif %}">${{ f.monto }}</td>
+                <td class="small">{{ f.fecha|date:"d/m/Y" }}</td>
+                <td class="small text-muted">{{ f.registrado_por.username|default:"-" }}</td>
+                <td class="small">
+                    {% if f.pago %}
+                    <a href="/panel/pagos/{{ f.pago.id }}/editar/" class="badge bg-primary text-decoration-none" title="Ver pago">
+                        <i class="fas fa-link me-1"></i>Pago #{{ f.pago.id }}
+                    </a>
+                    {% else %}
+                    <span class="text-muted">Manual</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if not f.pago %}
+                    <a href="/panel/finanzas/{{ f.id }}/eliminar/" class="btn btn-outline-danger btn-action" onclick="return confirm('¿Eliminar?')"><i class="fas fa-trash"></i></a>
+                    {% else %}
+                    <span class="text-muted small" title="Eliminar el pago para quitar este movimiento"><i class="fas fa-lock"></i></span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="8" class="text-center text-muted py-4">Sin movimientos</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if finanzas.has_other_pages %}
+    <nav><ul class="pagination pagination-sm justify-content-center">
+        {% if finanzas.has_previous %}<li class="page-item"><a class="page-link" href="?page={{ finanzas.previous_page_number }}&buscar={{ buscar }}&tipo={{ tipo }}&categoria={{ categoria }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}">Anterior</a></li>{% endif %}
+        <li class="page-item active"><span class="page-link">{{ finanzas.number }} / {{ finanzas.paginator.num_pages }}</span></li>
+        {% if finanzas.has_next %}<li class="page-item"><a class="page-link" href="?page={{ finanzas.next_page_number }}&buscar={{ buscar }}&tipo={{ tipo }}&categoria={{ categoria }}&fecha_desde={{ fecha_desde }}&fecha_hasta={{ fecha_hasta }}">Siguiente</a></li>{% endif %}
+    </ul></nav>
+    {% endif %}
+</div>
+{% endblock %}

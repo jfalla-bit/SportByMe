@@ -1,0 +1,72 @@
+{% extends 'panel/base_panel.html' %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block nav_conceptos %}active{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+<div class="col-md-6">
+<div class="content-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h6 class="fw-bold mb-0">
+            <i class="fas fa-tags me-2 text-primary"></i>{{ titulo }}
+        </h6>
+        <a href="/panel/conceptos/" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i>Volver
+        </a>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="row g-3">
+
+            <div class="col-12">
+                <label class="form-label fw-semibold">
+                    Nombre <span class="text-danger">*</span>
+                </label>
+                <input type="text" name="nombre" class="form-control" required
+                       placeholder="Ej: Cuota Mensual, Inscripción Torneo..."
+                       value="{% if concepto %}{{ concepto.nombre }}{% elif post_data %}{{ post_data.nombre }}{% endif %}">
+            </div>
+
+            <div class="col-12">
+                <label class="form-label fw-semibold">Descripción</label>
+                <textarea name="descripcion" class="form-control" rows="3"
+                          placeholder="Descripción opcional...">{% if concepto %}{{ concepto.descripcion }}{% elif post_data %}{{ post_data.descripcion }}{% endif %}</textarea>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">Monto Base</label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" name="monto_base" class="form-control"
+                           min="0" step="0.01"
+                           value="{% if concepto %}{{ concepto.monto_base }}{% elif post_data %}{{ post_data.monto_base }}{% else %}0{% endif %}">
+                </div>
+                <div class="form-text">Valor sugerido al registrar un pago con este concepto.</div>
+            </div>
+
+            {% if concepto %}
+            <div class="col-md-6 d-flex align-items-end pb-1">
+                <div class="form-check">
+                    <input type="checkbox" name="activo" class="form-check-input" id="id_activo"
+                           {% if concepto.activo %}checked{% endif %}>
+                    <label class="form-check-label fw-semibold" for="id_activo">
+                        Concepto Activo
+                    </label>
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+        <div class="mt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-1"></i>Guardar
+            </button>
+            <a href="/panel/conceptos/" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+</div>
+</div>
+{% endblock %}

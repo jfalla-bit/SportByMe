@@ -1,0 +1,141 @@
+{% extends 'entrenador/base_entrenador.html' %}
+{% block title %}Asistencia — {{ entrenamiento.titulo }}{% endblock %}
+{% block nav_entrenamientos %}active{% endblock %}
+{% block page_title %}Registrar Asistencia{% endblock %}
+
+{% block content %}
+
+<!-- Cabecera del entrenamiento -->
+<div class="content-card mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="fw-bold mb-1">
+                <i class="fas fa-clipboard-check me-2 text-warning"></i>{{ entrenamiento.titulo }}
+            </h5>
+            <span class="badge bg-warning text-dark me-1">{{ entrenamiento.equipo.nombre }}</span>
+            <span class="text-muted small">
+                <i class="fas fa-calendar me-1"></i>{{ entrenamiento.fecha|date:"d/m/Y" }}
+                &nbsp;|&nbsp;
+                <i class="fas fa-clock me-1"></i>{{ entrenamiento.hora_inicio|time:"H:i" }} - {{ entrenamiento.hora_fin|time:"H:i" }}
+                {% if entrenamiento.lugar %}&nbsp;|&nbsp;<i class="fas fa-map-marker-alt me-1"></i>{{ entrenamiento.lugar }}{% endif %}
+            </span>
+        </div>
+        <a href="/entrenador/mis-entrenamientos/" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i>Volver
+        </a>
+    </div>
+</div>
+
+<div class="content-card">
+    <h6 class="fw-bold mb-3">
+        <i class="fas fa-users me-2 text-primary"></i>
+        Jugadores <span class="badge bg-primary">{{ filas|length }}</span>
+    </h6>
+
+    {% if filas %}
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- Botones rápidos para marcar todos -->
+        <div class="d-flex gap-2 mb-3">
+            <span class="text-muted small me-2 align-self-center">Marcar todos como:</span>
+            <button type="button" class="btn btn-success btn-sm" onclick="marcarTodos('asistio')">
+                <i class="fas fa-check me-1"></i>Asistió
+            </button>
+            <button type="button" class="btn btn-danger btn-sm" onclick="marcarTodos('no_asistio')">
+                <i class="fas fa-times me-1"></i>No Asistió
+            </button>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="marcarTodos('justificado')">
+                <i class="fas fa-exclamation me-1"></i>Justificado
+            </button>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Jugador</th>
+                        <th>Posición</th>
+                        <th>Estado *</th>
+                        <th>Observación</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fila in filas %}
+                    <tr id="fila_{{ fila.jugador.id }}">
+                        <td>
+                            <strong>{{ fila.jugador.usuario.get_full_name|default:fila.jugador.usuario.username }}</strong>
+                            {% if fila.jugador.numero_camiseta %}
+                            <span class="badge bg-secondary ms-1">#{{ fila.jugador.numero_camiseta }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="small text-muted">{{ fila.jugador.posicion|default:"—" }}</td>
+                        <td>
+                            <select name="estado_{{ fila.jugador.id }}"
+                                    class="form-select form-select-sm estado-select"
+                                    data-fila="{{ fila.jugador.id }}"
+                                    onchange="colorFila(this)"
+                                    style="min-width:140px">
+                                {% for val, label in estados %}
+                                <option value="{{ val }}" {% if fila.estado == val %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td>
+                            <input type="text" name="obs_{{ fila.jugador.id }}"
+                                   class="form-control form-control-sm"
+                                   placeholder="Observación opcional..."
+                                   value="{{ fila.observacion }}"
+                                   style="min-width:180px">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-3 d-flex gap-2">
+            <button type="submit" class="btn btn-warning">
+                <i class="fas fa-save me-1"></i>Guardar Asistencia
+            </button>
+            <a href="/entrenador/mis-entrenamientos/" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+
+    {% else %}
+    <div class="text-center text-muted py-4">
+        <i class="fas fa-users fa-2x mb-2 d-block opacity-25"></i>
+        El equipo <strong>{{ entrenamiento.equipo.nombre }}</strong> no tiene jugadores activos asignados.
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const COLORES = {
+    'asistio':     'table-success',
+    'no_asistio':  'table-danger',
+    'justificado': 'table-warning',
+};
+
+function colorFila(select) {
+    const fila = document.getElementById('fila_' + select.dataset.fila);
+    fila.className = 'align-middle ' + (COLORES[select.value] || '');
+}
+
+function marcarTodos(estado) {
+    document.querySelectorAll('.estado-select').forEach(sel => {
+        sel.value = estado;
+        colorFila(sel);
+    });
+}
+
+// Aplicar colores al cargar
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.estado-select').forEach(sel => colorFila(sel));
+});
+</script>
+{% endblock %}

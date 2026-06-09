@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard Deportista - Sistema Deportivo{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-running me-2"></i>
+                        Dashboard de {{ role_display }}
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-success" role="alert">
+                        <h4 class="alert-heading">¡Bienvenido!</h4>
+                        <p class="mb-0">
+                            <strong>Bienvenido, {{ user.get_full_name|default:user.username }}, al Dashboard de {{ role_display }}</strong>
+                        </p>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <h5>Información del Usuario:</h5>
+                            <ul class="list-group">
+                                <li class="list-group-item">
+                                    <strong>Usuario:</strong> {{ user.username }}
+                                </li>
+                                <li class="list-group-item">
+                                    <strong>Email:</strong> {{ user.email }}
+                                </li>
+                                <li class="list-group-item">
+                                    <strong>Rol:</strong> 
+                                    <span class="badge bg-primary">{{ user.get_role_display }}</span>
+                                </li>
+                                <li class="list-group-item">
+                                    <strong>Estado:</strong> 
+                                    <span class="badge bg-success">Activo</span>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Acciones Disponibles:</h5>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-outline-primary" type="button">
+                                    <i class="fas fa-user me-2"></i>Mi Perfil
+                                </button>
+                                <button class="btn btn-outline-success" type="button">
+                                    <i class="fas fa-dumbbell me-2"></i>Mis Rutinas
+                                </button>
+                                <button class="btn btn-outline-info" type="button">
+                                    <i class="fas fa-chart-line me-2"></i>Mi Progreso
+                                </button>
+                                <button class="btn btn-outline-warning" type="button">
+                                    <i class="fas fa-calendar me-2"></i>Calendario
+                                </button>
+                                <a href="{% url 'auth:logout' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

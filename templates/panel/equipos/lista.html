@@ -1,0 +1,87 @@
+{% extends 'panel/base_panel.html' %}
+{% block title %}Equipos{% endblock %}
+{% block nav_equipos %}active{% endblock %}
+{% block page_title %}Gestión de Equipos{% endblock %}
+{% block content %}
+<div class="content-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0"><i class="fas fa-shield-alt me-2 text-success"></i>Equipos</h6>
+        <div class="d-flex gap-2">
+            <a href="/panel/equipos/crear/" class="btn btn-success btn-sm"><i class="fas fa-plus me-1"></i>Nuevo</a>
+            <a href="/panel/pdf/equipos/" class="btn btn-outline-danger btn-sm" title="Exportar PDF">
+                <i class="fas fa-file-pdf"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <form method="get" class="row g-2 mb-3 p-3 bg-light rounded">
+        <div class="col-md-4">
+            <input type="text" name="buscar" class="form-control form-control-sm"
+                   placeholder="Buscar por nombre..." value="{{ buscar }}">
+        </div>
+        <div class="col-md-3">
+            <select name="categoria" class="form-select form-select-sm">
+                <option value="">Todas las categorías</option>
+                {% for c in categorias %}
+                <option value="{{ c.id }}" {% if categoria_id == c.id|stringformat:"s" %}selected{% endif %}>{{ c.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="estado" class="form-select form-select-sm">
+                <option value="">Todos los estados</option>
+                <option value="activo"   {% if estado == 'activo' %}selected{% endif %}>Activo</option>
+                <option value="inactivo" {% if estado == 'inactivo' %}selected{% endif %}>Inactivo</option>
+            </select>
+        </div>
+        <div class="col-md-3 d-flex gap-1">
+            <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-search"></i></button>
+            <a href="/panel/equipos/" class="btn btn-outline-secondary btn-sm"><i class="fas fa-times"></i></a>
+        </div>
+    </form>
+
+    {% if buscar or categoria_id or estado %}
+    <div class="alert alert-info py-2 mb-3">
+        <i class="fas fa-filter me-1"></i>
+        <strong>{{ total_filtrados }}</strong> equipo(s) encontrado(s).
+    </div>
+    {% endif %}
+
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr><th>Nombre</th><th>Categoría</th><th>Entrenador</th><th>Jugadores</th><th>Estado</th><th>Acciones</th></tr>
+        </thead>
+        <tbody>
+            {% for e in equipos %}
+            <tr>
+                <td><strong>{{ e.nombre }}</strong></td>
+                <td><span class="badge bg-info">{{ e.categoria.nombre }}</span></td>
+                <td>{{ e.entrenador.get_full_name|default:"Sin asignar" }}</td>
+                <td><span class="badge bg-primary">{{ e.num_jugadores }}</span></td>
+                <td><span class="badge {% if e.activo %}bg-success{% else %}bg-secondary{% endif %}">{% if e.activo %}Activo{% else %}Inactivo{% endif %}</span></td>
+                <td>
+                    <a href="/panel/equipos/{{ e.id }}/jugadores/" class="btn btn-outline-primary btn-action me-1" title="Ver jugadores">
+                        <i class="fas fa-users"></i>
+                    </a>
+                    <a href="/panel/equipos/{{ e.id }}/editar/" class="btn btn-outline-warning btn-action me-1"><i class="fas fa-edit"></i></a>
+                    {% if e.num_jugadores == 0 %}
+                    <a href="/panel/equipos/{{ e.id }}/eliminar/" class="btn btn-outline-danger btn-action"
+                       onclick="return confirm('¿Eliminar el equipo {{ e.nombre }}?')">
+                        <i class="fas fa-trash"></i>
+                    </a>
+                    {% else %}
+                    <button class="btn btn-outline-danger btn-action" disabled
+                            title="Tiene {{ e.num_jugadores }} jugador(es) asociado(s). Desvinculá los jugadores primero.">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center text-muted py-4">Sin equipos</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

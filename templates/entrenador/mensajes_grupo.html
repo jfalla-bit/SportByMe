@@ -1,0 +1,83 @@
+{% extends 'entrenador/base_entrenador.html' %}
+{% block title %}Mensaje Grupal{% endblock %}
+{% block nav_mensajes %}active{% endblock %}
+{% block page_title %}Enviar Mensaje Grupal{% endblock %}
+
+{% block content %}
+<div class="content-card" style="max-width:700px;">
+    <h6 class="fw-bold mb-4">
+        <i class="fas fa-users me-2 text-warning"></i>Enviar mensaje a un equipo
+    </h6>
+
+    <form method="post" id="form-grupo">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Equipo destinatario</label>
+            <select name="equipo_id" class="form-select" required>
+                <option value="">Seleccionar equipo...</option>
+                {% for equipo in mis_equipos %}
+                <option value="{{ equipo.id }}"
+                    {% if post_data.equipo_id == equipo.id|stringformat:"s" %}selected{% endif %}>
+                    {{ equipo.nombre }} — {{ equipo.categoria.nombre }}
+                </option>
+                {% endfor %}
+            </select>
+            <div class="form-text">Se enviará a todos los deportistas activos del equipo.</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Asunto</label>
+            <input type="text" name="asunto" class="form-control"
+                   placeholder="Asunto del mensaje"
+                   value="{{ post_data.asunto|default:'' }}" required>
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label fw-semibold">Mensaje</label>
+            <textarea name="mensaje" id="mensaje" class="form-control" rows="7"
+                      placeholder="Escribe el mensaje aquí..." required>{{ post_data.mensaje|default:'' }}</textarea>
+        </div>
+
+        <!-- Vista previa -->
+        <div class="mb-4 d-none" id="bloque_preview">
+            <label class="form-label fw-semibold text-muted">Vista previa del mensaje</label>
+            <div id="preview_texto" class="border rounded p-3 bg-light" style="white-space:pre-wrap; font-size:0.9rem;"></div>
+        </div>
+
+        <div class="d-flex gap-2 flex-wrap">
+            <button type="button" class="btn btn-outline-secondary" id="btn_preview">
+                <i class="fas fa-eye me-1"></i>Vista previa
+            </button>
+            <button type="submit" class="btn btn-warning">
+                <i class="fas fa-paper-plane me-2"></i>Enviar mensaje
+            </button>
+            <a href="/entrenador/mensajes/enviar/" class="btn btn-outline-secondary">Envío individual</a>
+            <a href="/entrenador/mensajes/" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    const btn     = document.getElementById('btn_preview');
+    const bloque  = document.getElementById('bloque_preview');
+    const preview = document.getElementById('preview_texto');
+    const area    = document.getElementById('mensaje');
+
+    btn.addEventListener('click', function () {
+        const texto = area.value.trim();
+        if (!texto) { bloque.classList.add('d-none'); return; }
+        preview.textContent = texto;
+        bloque.classList.remove('d-none');
+        preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
+
+    area.addEventListener('input', function () {
+        if (!bloque.classList.contains('d-none')) preview.textContent = this.value;
+    });
+})();
+</script>
+{% endblock %}

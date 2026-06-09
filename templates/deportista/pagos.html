@@ -1,0 +1,200 @@
+{% extends 'deportista/base_deportista.html' %}
+{% block title %}Mis Pagos{% endblock %}
+{% block nav_pagos %}active{% endblock %}
+{% block page_title %}Mis Pagos{% endblock %}
+
+{% block content %}
+
+{% if not es_mayor %}
+<div class="alert alert-info d-flex align-items-center mb-3">
+    <i class="fas fa-info-circle fa-lg me-3"></i>
+    <div>Eres menor de edad. Los pagos deben ser gestionados por tu acudiente.</div>
+</div>
+{% endif %}
+
+{% if total_vencido > 0 %}
+<div class="alert alert-danger d-flex align-items-center mb-4">
+    <i class="fas fa-exclamation-triangle fa-lg me-3"></i>
+    <div>
+        Tienes <strong>${{ total_vencido }}</strong> en pagos vencidos sin regularizar.
+        Contacta a tu entrenador o administrador.
+        <a href="?estado=vencido" class="alert-link ms-2">Ver vencidos →</a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Resumen financiero -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card stat-card bg-success text-white">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="fs-3 fw-bold">${{ total_pagado }}</div>
+                    <div class="small opacity-75">Total Pagado</div>
+                </div>
+                <i class="fas fa-check-circle fa-2x opacity-50"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card {% if total_pendiente > 0 %}bg-warning text-dark{% else %}bg-light{% endif %}">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="fs-3 fw-bold">${{ total_pendiente }}</div>
+                    <div class="small opacity-75">Pendiente</div>
+                </div>
+                <i class="fas fa-clock fa-2x opacity-50"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card stat-card {% if total_vencido > 0 %}bg-danger text-white{% else %}bg-light{% endif %}">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="fs-3 fw-bold">${{ total_vencido }}</div>
+                    <div class="small opacity-75">Vencido</div>
+                </div>
+                <i class="fas fa-exclamation-circle fa-2x opacity-50"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="content-card">
+    <h6 class="fw-bold mb-3">
+        <i class="fas fa-dollar-sign me-2 text-primary"></i>Historial de Pagos
+    </h6>
+
+    <!-- Filtros -->
+    <form method="get" class="row g-2 mb-3 p-3 bg-light rounded">
+        <div class="col-md-4">
+            <select name="estado" class="form-select form-select-sm">
+                <option value="">Todos los estados</option>
+                {% for value, label in estados %}
+                <option value="{{ value }}" {% if estado == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <select name="concepto" class="form-select form-select-sm">
+                <option value="">Todos los conceptos</option>
+                {% for value, label in conceptos %}
+                <option value="{{ value }}" {% if concepto == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4 d-flex gap-2">
+            <button type="submit" class="btn btn-primary btn-sm">
+                <i class="fas fa-search me-1"></i>Filtrar
+            </button>
+            <a href="/deportista/pagos/" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-times"></i>
+            </a>
+        </div>
+    </form>
+
+    {% if estado or concepto %}
+    <div class="alert alert-info py-2 mb-3">
+        <i class="fas fa-filter me-1"></i>
+        <strong>{{ total_filtrados }}</strong> pago(s) encontrado(s).
+    </div>
+    {% endif %}
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Descripción</th>
+                    <th>Concepto</th>
+                    <th>Monto</th>
+                    <th>Vencimiento</th>
+                    <th>Fecha Pago</th>
+                    <th>Método</th>
+                    <th>Estado</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in pagos %}
+                <tr class="{% if p.estado == 'vencido' %}table-danger{% elif p.estado == 'pagado' %}table-success bg-opacity-10{% elif p.estado == 'en_revision' %}table-warning bg-opacity-25{% endif %}">
+                    <td><strong>{{ p.descripcion }}</strong></td>
+                    <td class="small text-muted">{{ p.get_concepto_display }}</td>
+                    <td class="fw-bold">${{ p.monto }}</td>
+                    <td class="small {% if p.estado == 'vencido' %}text-danger fw-semibold{% endif %}">
+                        {{ p.fecha_vencimiento|date:"d/m/Y" }}
+                    </td>
+                    <td class="small">
+                        {% if p.fecha_pago %}{{ p.fecha_pago|date:"d/m/Y" }}
+                        {% else %}<span class="text-muted">—</span>{% endif %}
+                    </td>
+                    <td class="small text-muted">
+                        {% if p.metodo_pago %}{{ p.get_metodo_pago_display }}
+                        {% else %}<span class="text-muted">—</span>{% endif %}
+                    </td>
+                    <td>
+                        <span class="badge
+                            {% if p.estado == 'pagado' %}bg-success
+                            {% elif p.estado == 'vencido' %}bg-danger
+                            {% elif p.estado == 'en_revision' %}bg-warning text-dark
+                            {% else %}bg-secondary text-dark{% endif %}">
+                            {{ p.get_estado_display }}
+                        </span>
+                    </td>
+                    <td>
+                        {% if p.estado == 'pendiente' or p.estado == 'vencido' %}
+                        {% if es_mayor %}
+                        <a href="/payments/pagar/{{ p.id }}/"
+                           class="btn btn-success btn-sm me-1">
+                            <i class="fas fa-credit-card me-1"></i>Pagar
+                        </a>
+                        {% endif %}
+                        <a href="/deportista/pagos/{{ p.id }}/reportar/"
+                           class="btn btn-primary btn-sm">
+                            <i class="fas fa-paper-plane me-1"></i>Reportar Pago
+                        </a>
+                        {% elif p.estado == 'en_revision' %}
+                        <span class="badge bg-warning text-dark">
+                            <i class="fas fa-clock me-1"></i>En revisión
+                        </span>
+                        {% else %}
+                        <a href="/deportista/pagos/{{ p.id }}/factura/"
+                           class="btn btn-outline-secondary btn-sm" target="_blank"
+                           title="Descargar Factura">
+                            <i class="fas fa-file-invoice-dollar me-1"></i>Factura
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-2x mb-2 d-block opacity-25"></i>
+                        No tienes pagos registrados.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if pagos.has_other_pages %}
+    <nav>
+        <ul class="pagination pagination-sm justify-content-center">
+            {% if pagos.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ pagos.previous_page_number }}&estado={{ estado }}&concepto={{ concepto }}">«</a>
+            </li>
+            {% endif %}
+            <li class="page-item active">
+                <span class="page-link">{{ pagos.number }} / {{ pagos.paginator.num_pages }}</span>
+            </li>
+            {% if pagos.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ pagos.next_page_number }}&estado={{ estado }}&concepto={{ concepto }}">»</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends 'entrenador/base_entrenador.html' %}
+{% block title %}Estadísticas por Equipo{% endblock %}
+{% block nav_partidos %}active{% endblock %}
+{% block page_title %}Resultados y Estadísticas por Equipo{% endblock %}
+{% block content %}
+
+<div class="content-card mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0"><i class="fas fa-futbol me-2 text-warning"></i>Por Equipo</h6>
+        <a href="/entrenador/estadisticas/jugador/" class="btn btn-outline-warning btn-sm">
+            <i class="fas fa-user me-1"></i>Ver por Jugador
+        </a>
+    </div>
+    <form method="get" class="row g-2">
+        <div class="col-md-6">
+            <select name="equipo" id="sel-equipo" class="form-select form-select-sm">
+                <option value="">Seleccionar equipo...</option>
+                {% for e in equipos %}
+                <option value="{{ e.id }}" {% if equipo_id == e.id|stringformat:"s" %}selected{% endif %}>{{ e.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3 d-flex gap-1">
+            <button type="submit" class="btn btn-warning btn-sm"><i class="fas fa-search me-1"></i>Ver</button>
+            <a href="/entrenador/estadisticas/" class="btn btn-outline-secondary btn-sm"><i class="fas fa-times"></i></a>
+        </div>
+    </form>
+</div>
+
+{% if partidos is not None %}
+{% if partidos %}
+{% for p in partidos %}
+<div class="content-card mb-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h6 class="fw-bold mb-0">
+                <span class="badge bg-warning text-dark me-1">{{ p.equipo_propio.nombre }}</span>
+                vs <strong>{{ p.equipo_rival }}</strong>
+            </h6>
+            <small class="text-muted">
+                <i class="fas fa-calendar me-1"></i>{{ p.fecha|date:"d/m/Y" }}
+                {% if p.cancha %}&nbsp;|&nbsp;<i class="fas fa-map-marker-alt me-1"></i>{{ p.cancha }}{% endif %}
+            </small>
+        </div>
+        {% if p.goles_favor is not None %}
+        <span class="badge bg-dark fs-5 px-3">{{ p.goles_favor }} — {{ p.goles_contra }}</span>
+        {% else %}
+        <span class="badge bg-secondary">Sin resultado</span>
+        {% endif %}
+    </div>
+
+    {% if p.estadisticas.all %}
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Jugador</th>
+                    <th class="text-center">⚽ Goles</th>
+                    <th class="text-center">🅰 Asistencias</th>
+                    <th class="text-center">🟨</th>
+                    <th class="text-center">🟥</th>
+                    <th class="text-center">⭐ Calif.</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for est in p.estadisticas.all %}
+                <tr>
+                    <td>{{ est.jugador.usuario.get_full_name|default:est.jugador.usuario.username }}</td>
+                    <td class="text-center">{% if est.goles %}<strong class="text-success">{{ est.goles }}</strong>{% else %}—{% endif %}</td>
+                    <td class="text-center">{% if est.asistencias %}<strong class="text-primary">{{ est.asistencias }}</strong>{% else %}—{% endif %}</td>
+                    <td class="text-center">{% if est.tarjeta_amarilla %}<span class="badge bg-warning text-dark">🟨</span>{% else %}—{% endif %}</td>
+                    <td class="text-center">{% if est.tarjeta_roja %}<span class="badge bg-danger">🟥</span>{% else %}—{% endif %}</td>
+                    <td class="text-center">{% if est.calificacion %}<strong>{{ est.calificacion }}</strong>{% else %}—{% endif %}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <p class="text-muted small mb-0">Sin estadísticas cargadas para este partido.</p>
+    {% endif %}
+</div>
+{% endfor %}
+{% else %}
+<div class="content-card text-center text-muted py-4">
+    <i class="fas fa-futbol fa-2x mb-2 d-block opacity-25"></i>
+    No hay partidos registrados para este equipo.
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('sel-equipo').addEventListener('change', function() {
+    if (this.value) this.form.submit();
+});
+</script>
+{% endblock %}

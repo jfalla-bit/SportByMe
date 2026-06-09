@@ -1,0 +1,361 @@
+{% extends 'panel/base_panel.html' %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block nav_usuarios %}active{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+<div class="col-md-9">
+<div class="content-card">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h6 class="fw-bold mb-0">
+            <i class="fas fa-user{% if not usuario %}-plus{% endif %} me-2 text-primary"></i>{{ titulo }}
+        </h6>
+        <a href="/panel/usuarios/" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i>Volver
+        </a>
+    </div>
+
+    {% if not usuario %}
+    <div class="alert alert-info py-2 mb-4">
+        <i class="fas fa-info-circle me-2"></i>
+        El <strong>nombre de usuario</strong> se genera automáticamente según el rol.
+        <span class="text-muted small ms-2">Ej: <code>admin001</code>, <code>entrenador002</code>, <code>deportista005</code></span>
+    </div>
+    {% endif %}
+
+    <form method="post" id="form-usuario" novalidate>
+        {% csrf_token %}
+
+        <!-- ── Sección: Datos de acceso ─────────────────────────────────── -->
+        <div class="border-bottom pb-3 mb-3">
+            <p class="text-muted small fw-semibold text-uppercase mb-3">
+                <i class="fas fa-key me-1"></i>Datos de Acceso
+            </p>
+            <div class="row g-3">
+
+                {% if usuario %}
+                <!-- Username solo lectura en edición -->
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Username</label>
+                    <input type="text" class="form-control bg-light" value="{{ usuario.username }}" readonly>
+                </div>
+                {% endif %}
+
+                <div class="{% if usuario %}col-md-4{% else %}col-md-6{% endif %}">
+                    <label class="form-label fw-semibold">
+                        Email <span class="text-danger">*</span>
+                    </label>
+                    <input type="email" name="email" class="form-control" required
+                           value="{% if post_data %}{{ post_data.email }}{% elif usuario %}{{ usuario.email }}{% endif %}"
+                           placeholder="correo@ejemplo.com">
+                </div>
+
+                <div class="{% if usuario %}col-md-4{% else %}col-md-6{% endif %}">
+                    <label class="form-label fw-semibold">
+                        Contraseña
+                        {% if usuario %}
+                        <span class="text-muted fw-normal small">(dejar vacío para no cambiar)</span>
+                        {% else %}
+                        <span class="text-danger">*</span>
+                        {% endif %}
+                    </label>
+                    <div class="input-group">
+                        <input type="password" name="password" id="id_password"
+                               class="form-control"
+                               {% if not usuario %}required{% endif %}
+                               placeholder="{% if usuario %}Nueva contraseña...{% else %}Contraseña{% endif %}">
+                        <button type="button" class="btn btn-outline-secondary"
+                                onclick="togglePassword()" title="Mostrar/ocultar">
+                            <i class="fas fa-eye" id="icon-eye"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Sección: Datos personales ───────────────────────────────── -->
+        <div class="border-bottom pb-3 mb-3">
+            <p class="text-muted small fw-semibold text-uppercase mb-3">
+                <i class="fas fa-id-card me-1"></i>Datos Personales
+            </p>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Nombre</label>
+                    <input type="text" name="first_name" class="form-control"
+                           value="{% if post_data %}{{ post_data.first_name }}{% elif usuario %}{{ usuario.first_name }}{% endif %}"
+                           placeholder="Nombre">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Apellido</label>
+                    <input type="text" name="last_name" class="form-control"
+                           value="{% if post_data %}{{ post_data.last_name }}{% elif usuario %}{{ usuario.last_name }}{% endif %}"
+                           placeholder="Apellido">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">
+                        Documento <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" name="documento" class="form-control" required
+                           inputmode="numeric" pattern="\d+"
+                           value="{% if post_data %}{{ post_data.documento }}{% elif usuario %}{{ usuario.documento }}{% endif %}"
+                           placeholder="Solo números">
+                    <div class="form-text">Solo números, sin puntos ni guiones.</div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Teléfono</label>
+                    <input type="text" name="phone" class="form-control"
+                           inputmode="numeric" pattern="\d{7,15}"
+                           value="{% if post_data %}{{ post_data.phone }}{% elif usuario %}{{ usuario.phone }}{% endif %}"
+                           placeholder="7-15 dígitos">
+                </div>
+
+                <!-- Rol -->
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">
+                        Rol <span class="text-danger">*</span>
+                    </label>
+                    <select name="role" id="id_role" class="form-select" required>
+                        {% for value, label in roles %}
+                        <option value="{{ value }}"
+                            {% if post_data and post_data.role == value %}selected
+                            {% elif not post_data and usuario and usuario.role == value %}selected
+                            {% elif not post_data and not usuario and value == 'deportista' %}selected
+                            {% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Estado (solo en edición) -->
+                {% if usuario %}
+                <div class="col-md-4 d-flex align-items-end pb-1">
+                    <div class="form-check">
+                        <input type="checkbox" name="is_active" class="form-check-input"
+                               id="id_is_active"
+                               {% if post_data %}{% if post_data.is_active == 'on' %}checked{% endif %}
+                               {% elif usuario.is_active %}checked{% endif %}>
+                        <label class="form-check-label fw-semibold" for="id_is_active">
+                            Usuario Activo
+                        </label>
+                        <div class="form-text">Desactivar impide el login.</div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- ── Sección: Datos por rol (dinámica) ───────────────────────── -->
+        <div id="seccion-rol" class="border-bottom pb-3 mb-3">
+            <p class="text-muted small fw-semibold text-uppercase mb-3">
+                <i class="fas fa-sitemap me-1"></i>Asignación por Rol
+            </p>
+            <div class="row g-3">
+
+                <!-- Equipo (entrenador y deportista) -->
+                <div class="col-md-6" id="campo-equipo">
+                    <label class="form-label fw-semibold" id="label-equipo">
+                        Equipo <span class="text-danger" id="req-equipo">*</span>
+                    </label>
+                    <select name="equipo" id="id_equipo" class="form-select">
+                        <option value="">— Sin equipo —</option>
+                        {% for eq in equipos %}
+                        <option value="{{ eq.id }}"
+                                data-categoria="{{ eq.categoria.nombre }}"
+                            {% if post_data and post_data.equipo == eq.id|stringformat:"s" %}selected
+                            {% elif not post_data and jugador and jugador.equipo_id == eq.id %}selected
+                            {% endif %}>
+                            {{ eq.nombre }} ({{ eq.categoria.nombre }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Categoría (informativa, se rellena al elegir equipo) -->
+                <div class="col-md-6" id="campo-categoria">
+                    <label class="form-label fw-semibold">Categoría</label>
+                    <input type="text" id="id_categoria_display" class="form-control bg-light"
+                           readonly placeholder="Se asigna automáticamente con el equipo">
+                </div>
+
+                <!-- Posición (solo deportista) -->
+                <div class="col-md-6" id="campo-posicion">
+                    <label class="form-label fw-semibold">
+                        Posición <span class="text-danger">*</span>
+                    </label>
+                    <input type="text" name="posicion" id="id_posicion" class="form-control"
+                           value="{% if post_data %}{{ post_data.posicion }}{% elif jugador %}{{ jugador.posicion }}{% endif %}"
+                           placeholder="Ej: Delantero, Portero, Defensa...">
+                </div>
+
+                <!-- Deportista a cargo (solo acudiente) -->
+                <div class="col-md-6" id="campo-jugador-acudiente" style="display:none">
+                    <label class="form-label fw-semibold">
+                        Deportista a cargo <span class="text-danger">*</span>
+                    </label>
+                    <select name="jugador_id" id="id_jugador_acudiente" class="form-select">
+                        <option value="">— Seleccionar deportista —</option>
+                        {% for jug in jugadores_disponibles %}
+                        <option value="{{ jug.id }}"
+                            {% if post_data and post_data.jugador_id == jug.id|stringformat:"s" %}selected
+                            {% elif not post_data and acudiente and acudiente.jugador_id == jug.id %}selected
+                            {% endif %}>
+                            {{ jug.usuario.get_full_name|default:jug.usuario.username }}
+                            {% if jug.equipo %} — {{ jug.equipo.nombre }}{% endif %}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Parentesco (solo acudiente) -->
+                <div class="col-md-6" id="campo-parentesco" style="display:none">
+                    <label class="form-label fw-semibold">Parentesco</label>
+                    <input type="text" name="parentesco" id="id_parentesco" class="form-control"
+                           value="{% if post_data %}{{ post_data.parentesco }}{% elif acudiente %}{{ acudiente.parentesco }}{% endif %}"
+                           placeholder="Ej: Padre, Madre, Tutor...">
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Botones -->
+        <div class="d-flex gap-2 mt-2">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-1"></i>
+                {% if usuario %}Guardar Cambios{% else %}Crear Usuario{% endif %}
+            </button>
+            <a href="/panel/usuarios/" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// ── Datos iniciales desde Django ─────────────────────────────────────────────
+const ROL_INICIAL = document.getElementById('id_role').value;
+
+// ── Mostrar/ocultar contraseña ───────────────────────────────────────────────
+function togglePassword() {
+    const input = document.getElementById('id_password');
+    const icon  = document.getElementById('icon-eye');
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+    } else {
+        input.type = 'password';
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+    }
+}
+
+// ── Lógica de campos dinámicos por rol ──────────────────────────────────────
+function actualizarCamposPorRol(rol) {
+    const seccion   = document.getElementById('seccion-rol');
+    const cEquipo   = document.getElementById('campo-equipo');
+    const cCateg    = document.getElementById('campo-categoria');
+    const cPosicion = document.getElementById('campo-posicion');
+    const cJugador  = document.getElementById('campo-jugador-acudiente');
+    const cParent   = document.getElementById('campo-parentesco');
+    const reqEquipo = document.getElementById('req-equipo');
+    const selEquipo = document.getElementById('id_equipo');
+    const inpPos    = document.getElementById('id_posicion');
+
+    if (rol === 'administrador' || rol === 'pendiente') {
+        seccion.style.display = 'none';
+        selEquipo.required = false;
+        inpPos.required    = false;
+
+    } else if (rol === 'entrenador') {
+        seccion.style.display = '';
+        cEquipo.style.display   = '';
+        cCateg.style.display    = '';
+        cPosicion.style.display = 'none';
+        cJugador.style.display  = 'none';
+        cParent.style.display   = 'none';
+        selEquipo.required = false;
+        inpPos.required    = false;
+        reqEquipo.style.display = 'none';
+
+    } else if (rol === 'acudiente') {
+        seccion.style.display = '';
+        cEquipo.style.display   = 'none';
+        cCateg.style.display    = 'none';
+        cPosicion.style.display = 'none';
+        cJugador.style.display  = '';
+        cParent.style.display   = '';
+        selEquipo.required = false;
+        inpPos.required    = false;
+
+    } else {
+        // Deportista
+        seccion.style.display = '';
+        cEquipo.style.display   = '';
+        cCateg.style.display    = '';
+        cPosicion.style.display = '';
+        cJugador.style.display  = 'none';
+        cParent.style.display   = 'none';
+        selEquipo.required = true;
+        inpPos.required    = true;
+        reqEquipo.style.display = '';
+    }
+}
+
+// ── Rellenar categoría al cambiar equipo ────────────────────────────────────
+function actualizarCategoria() {
+    const sel    = document.getElementById('id_equipo');
+    const input  = document.getElementById('id_categoria_display');
+    const option = sel.options[sel.selectedIndex];
+    input.value  = option && option.value ? (option.dataset.categoria || '') : '';
+}
+
+// ── Validaciones frontend ────────────────────────────────────────────────────
+document.getElementById('form-usuario').addEventListener('submit', function(e) {
+    const rol       = document.getElementById('id_role').value;
+    const documento = document.querySelector('[name="documento"]').value.trim();
+    const phone     = document.querySelector('[name="phone"]').value.trim();
+    let errores     = [];
+
+    // Documento: solo números
+    if (documento && !/^\d+$/.test(documento)) {
+        errores.push('El documento debe contener solo números.');
+    }
+    // Teléfono: solo números y longitud
+    if (phone && !/^\d{7,15}$/.test(phone)) {
+        errores.push('El teléfono debe tener entre 7 y 15 dígitos numéricos.');
+    }
+    // Deportista: equipo y posición obligatorios
+    if (rol === 'deportista') {
+        const equipo  = document.getElementById('id_equipo').value;
+        const posicion = document.getElementById('id_posicion').value.trim();
+        if (!equipo)   errores.push('El equipo es obligatorio para deportistas.');
+        if (!posicion) errores.push('La posición es obligatoria para deportistas.');
+    }
+
+    if (errores.length > 0) {
+        e.preventDefault();
+        // Mostrar errores en un alert temporal
+        const div = document.createElement('div');
+        div.className = 'alert alert-danger alert-dismissible fade show mt-3';
+        div.innerHTML = '<strong>Corrige los siguientes errores:</strong><ul class="mb-0 mt-1">'
+            + errores.map(err => `<li>${err}</li>`).join('')
+            + '</ul><button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+        document.getElementById('form-usuario').prepend(div);
+        window.scrollTo(0, 0);
+    }
+});
+
+// ── Inicialización ───────────────────────────────────────────────────────────
+document.getElementById('id_role').addEventListener('change', function() {
+    actualizarCamposPorRol(this.value);
+});
+document.getElementById('id_equipo').addEventListener('change', actualizarCategoria);
+
+// Aplicar estado inicial al cargar la página
+actualizarCamposPorRol(ROL_INICIAL);
+actualizarCategoria();
+</script>
+{% endblock %}

@@ -1,0 +1,165 @@
+{% extends 'panel/base_panel.html' %}
+{% block title %}Estadísticas de Asistencia{% endblock %}
+{% block nav_estadisticas_asistencia %}active{% endblock %}
+{% block nav_estadisticas_open %}true{% endblock %}
+{% block nav_estadisticas_show %}show{% endblock %}
+{% block page_title %}Estadísticas de Asistencia{% endblock %}
+
+{% block content %}
+<!-- Filtros -->
+<div class="content-card mb-4">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label small fw-bold">Categoría</label>
+            <select name="categoria" class="form-select">
+                <option value="">Todas</option>
+                {% for cat in categorias %}
+                <option value="{{ cat.id }}" {% if categoria_id == cat.id|stringformat:"s" %}selected{% endif %}>{{ cat.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small fw-bold">Equipo</label>
+            <select name="equipo" class="form-select">
+                <option value="">Todos</option>
+                {% for eq in equipos %}
+                <option value="{{ eq.id }}" {% if equipo_id == eq.id|stringformat:"s" %}selected{% endif %}>{{ eq.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3 d-flex gap-2 align-items-end">
+            <button type="submit" class="btn btn-primary w-100"><i class="fas fa-search me-1"></i>Filtrar</button>
+            <a href="/panel/reportes/estadisticas-asistencia/" class="btn btn-outline-secondary"><i class="fas fa-times"></i></a>
+        </div>
+    </form>
+</div>
+
+<!-- Gráficos -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="content-card h-100">
+            <h6 class="fw-bold mb-3"><i class="fas fa-chart-bar me-2 text-primary"></i>% Asistencia por Deportista (Top 15)</h6>
+            {% if stats_deportistas %}
+            <canvas id="grafDepPct" height="220"></canvas>
+            {% else %}
+            <p class="text-muted text-center py-4">Sin datos de asistencia.</p>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="content-card h-100">
+            <h6 class="fw-bold mb-3"><i class="fas fa-shield-alt me-2 text-warning"></i>% Asistencia por Equipo</h6>
+            {% if stats_equipos %}
+            <canvas id="grafEqPct" height="220"></canvas>
+            {% else %}
+            <p class="text-muted text-center py-4">Sin datos de asistencia.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Tabla por equipo -->
+{% if stats_equipos %}
+<div class="content-card mb-4">
+    <h6 class="fw-bold mb-3"><i class="fas fa-shield-alt me-2 text-warning"></i>Resumen por Equipo</h6>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr><th>Equipo</th><th>Total</th><th>Asistió</th><th>No Asistió</th><th>Justificado</th><th>% Asistencia</th></tr>
+            </thead>
+            <tbody>
+                {% for s in stats_equipos %}
+                <tr>
+                    <td><strong>{{ s.equipo.nombre }}</strong></td>
+                    <td>{{ s.total }}</td>
+                    <td><span class="badge bg-success">{{ s.asistio }}</span></td>
+                    <td><span class="badge bg-danger">{{ s.no_asistio }}</span></td>
+                    <td><span class="badge bg-warning text-dark">{{ s.justificado }}</span></td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="progress flex-grow-1" style="height:8px">
+                                <div class="progress-bar {% if s.pct >= 75 %}bg-success{% elif s.pct >= 50 %}bg-warning{% else %}bg-danger{% endif %}"
+                                     style="width:{{ s.pct }}%"></div>
+                            </div>
+                            <span class="fw-bold">{{ s.pct }}%</span>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<!-- Tabla por deportista -->
+{% if stats_deportistas %}
+<div class="content-card">
+    <h6 class="fw-bold mb-3"><i class="fas fa-running me-2 text-primary"></i>Detalle por Deportista</h6>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr><th>Deportista</th><th>Equipo</th><th>Total</th><th>Asistió</th><th>No Asistió</th><th>Justificado</th><th>% Asistencia</th></tr>
+            </thead>
+            <tbody>
+                {% for s in stats_deportistas %}
+                <tr>
+                    <td><strong>{{ s.jugador.usuario.get_full_name|default:s.jugador.usuario.username }}</strong></td>
+                    <td class="small text-muted">{{ s.jugador.equipo.nombre|default:"—" }}</td>
+                    <td>{{ s.total }}</td>
+                    <td><span class="badge bg-success">{{ s.asistio }}</span></td>
+                    <td><span class="badge bg-danger">{{ s.no_asistio }}</span></td>
+                    <td><span class="badge bg-warning text-dark">{{ s.justificado }}</span></td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="progress flex-grow-1" style="height:8px">
+                                <div class="progress-bar {% if s.pct >= 75 %}bg-success{% elif s.pct >= 50 %}bg-warning{% else %}bg-danger{% endif %}"
+                                     style="width:{{ s.pct }}%"></div>
+                            </div>
+                            <span class="fw-bold">{{ s.pct }}%</span>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="7" class="text-center text-muted py-3">Sin registros.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+{% if stats_deportistas %}
+new Chart(document.getElementById('grafDepPct'), {
+    type: 'bar',
+    data: {
+        labels: {{ dep_nombres|safe }},
+        datasets: [{
+            label: '% Asistencia',
+            data: {{ dep_pct|safe }},
+            backgroundColor: {{ dep_pct|safe }}.map(v => v >= 75 ? 'rgba(25,135,84,0.7)' : v >= 50 ? 'rgba(255,193,7,0.7)' : 'rgba(220,53,69,0.7)')
+        }]
+    },
+    options: { scales: { y: { min: 0, max: 100, ticks: { callback: v => v + '%' } } }, plugins: { legend: { display: false } } }
+});
+{% endif %}
+{% if stats_equipos %}
+new Chart(document.getElementById('grafEqPct'), {
+    type: 'bar',
+    data: {
+        labels: {{ eq_nombres|safe }},
+        datasets: [{
+            label: '% Asistencia',
+            data: {{ eq_pct|safe }},
+            backgroundColor: {{ eq_pct|safe }}.map(v => v >= 75 ? 'rgba(25,135,84,0.7)' : v >= 50 ? 'rgba(255,193,7,0.7)' : 'rgba(220,53,69,0.7)')
+        }]
+    },
+    options: { scales: { y: { min: 0, max: 100, ticks: { callback: v => v + '%' } } }, plugins: { legend: { display: false } } }
+});
+{% endif %}
+</script>
+{% endblock %}

@@ -1,0 +1,98 @@
+{% extends 'acudiente/base_acudiente.html' %}
+{% block title %}Información del Deportista{% endblock %}
+{% block nav_deportista %}active{% endblock %}
+{% block page_title %}Información del Deportista{% endblock %}
+
+{% block content %}
+{% if not jugador %}
+<div class="content-card text-center py-5">
+    <i class="fas fa-user-clock fa-3x text-muted mb-3"></i>
+    <h5 class="text-muted">Sin deportista vinculado</h5>
+    <p class="text-muted">Contacta al administrador para que te vincule al deportista a tu cargo.</p>
+</div>
+{% else %}
+<div class="row g-3">
+
+    <!-- Información personal -->
+    <div class="col-md-6">
+        <div class="content-card">
+            <h6 class="fw-bold mb-4"><i class="fas fa-id-card me-2 text-primary"></i>Información Personal</h6>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold small text-muted">Nombre</label>
+                    <div class="form-control-plaintext border rounded px-3 py-2 bg-light">
+                        {{ jugador.usuario.first_name|default:"—" }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold small text-muted">Apellido</label>
+                    <div class="form-control-plaintext border rounded px-3 py-2 bg-light">
+                        {{ jugador.usuario.last_name|default:"—" }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold small text-muted">Documento</label>
+                    <div class="form-control-plaintext border rounded px-3 py-2 bg-light">
+                        {{ jugador.usuario.documento|default:"—" }}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold small text-muted">Fecha de Nacimiento</label>
+                    <div class="form-control-plaintext border rounded px-3 py-2 bg-light">
+                        {{ jugador.usuario.birth_date|date:"d/m/Y"|default:"—" }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Perfil deportivo -->
+    <div class="col-md-6">
+        <div class="content-card">
+            <h6 class="fw-bold mb-3"><i class="fas fa-id-badge me-2 text-warning"></i>Perfil Deportivo</h6>
+            <div class="d-flex flex-column gap-2">
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2">
+                    <span class="text-muted small">Estado</span>
+                    <span class="badge {% if jugador.activo %}bg-success{% else %}bg-secondary{% endif %}">
+                        {% if jugador.activo %}Activo{% else %}Inactivo{% endif %}
+                    </span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2">
+                    <span class="text-muted small">Posición</span>
+                    <strong>{{ jugador.posicion|default:"No asignada" }}</strong>
+                </div>
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2">
+                    <span class="text-muted small">Número de Camiseta</span>
+                    <strong>{% if jugador.numero_camiseta %}#{{ jugador.numero_camiseta }}{% else %}—{% endif %}</strong>
+                </div>
+                {% if jugador.equipo %}
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2">
+                    <span class="text-muted small">Equipo</span>
+                    <strong>{{ jugador.equipo.nombre }}</strong>
+                </div>
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2">
+                    <span class="text-muted small">Categoría</span>
+                    <span class="badge bg-warning text-dark">{{ jugador.equipo.categoria.nombre }}</span>
+                </div>
+                {% if jugador.equipo.categoria.subcategoria %}
+                <div class="d-flex justify-content-between align-items-center border-bottom pb-2">
+                    <span class="text-muted small">Subcategoría</span>
+                    <span class="small">{{ jugador.equipo.categoria.get_subcategoria_display }}</span>
+                </div>
+                {% endif %}
+                {% if jugador.equipo.entrenador %}
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted small">Entrenador</span>
+                    <strong>{{ jugador.equipo.entrenador.get_full_name|default:jugador.equipo.entrenador.username }}</strong>
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="text-center py-2 text-muted small">Sin equipo asignado.</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,124 @@
+{% extends 'panel/base_panel.html' %}
+{% block title %}{{ titulo }}{% endblock %}
+{% block nav_pagos %}active{% endblock %}
+{% block page_title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+<div class="col-md-8">
+<div class="content-card">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h6 class="fw-bold mb-0">
+            <i class="fas fa-money-bill-wave me-2 text-primary"></i>{{ titulo }}
+        </h6>
+        <a href="/panel/pagos/" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i>Volver
+        </a>
+    </div>
+
+    <form method="post" id="form-pago">
+        {% csrf_token %}
+        <div class="row g-3">
+
+            <!-- Deportista -->
+            <div class="col-12">
+                <label class="form-label fw-semibold">Deportista <span class="text-danger">*</span></label>
+                <select name="jugador" class="form-select" required>
+                    <option value="">Seleccionar deportista...</option>
+                    {% for j in jugadores %}
+                    <option value="{{ j.id }}"
+                        {% if pago.jugador_id == j.id %}selected{% endif %}>
+                        {{ j.usuario.get_full_name|default:j.usuario.username }}
+                        {% if j.equipo %} — {{ j.equipo.nombre }}{% endif %}
+                        {% if j.usuario.documento %} (Doc: {{ j.usuario.documento }}){% endif %}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Concepto y Estado -->
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">Concepto <span class="text-danger">*</span></label>
+                <select name="concepto" class="form-select" required>
+                    {% for val, label in conceptos %}
+                    <option value="{{ val }}" {% if pago.concepto == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">Estado <span class="text-danger">*</span></label>
+                <select name="estado" class="form-select" required>
+                    {% for val, label in estados %}
+                    <option value="{{ val }}" {% if pago.estado == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Descripción -->
+            <div class="col-12">
+                <label class="form-label fw-semibold">Descripción <span class="text-danger">*</span></label>
+                <input type="text" name="descripcion" class="form-control" required
+                       placeholder="Ej: Cuota mensual enero 2025..."
+                       value="{{ pago.descripcion|default:'' }}">
+            </div>
+
+            <!-- Monto y Método -->
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Monto <span class="text-danger">*</span></label>
+                <div class="input-group">
+                    <span class="input-group-text">$</span>
+                    <input type="number" name="monto" class="form-control" required
+                           min="0.01" step="0.01"
+                           value="{{ pago.monto|default:'' }}">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Método de Pago</label>
+                <select name="metodo_pago" class="form-select">
+                    <option value="">— Sin especificar —</option>
+                    {% for val, label in metodos %}
+                    <option value="{{ val }}" {% if pago.metodo_pago == val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Fechas -->
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Fecha de Vencimiento <span class="text-danger">*</span></label>
+                <input type="date" name="fecha_vencimiento" class="form-control" required
+                       value="{{ pago.fecha_vencimiento|date:'Y-m-d'|default:'' }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Fecha de Pago</label>
+                <input type="date" name="fecha_pago" class="form-control"
+                       value="{{ pago.fecha_pago|date:'Y-m-d'|default:'' }}">
+                <div class="form-text">Completar solo si ya fue cobrado.</div>
+            </div>
+
+        </div>
+
+        <div class="mt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save me-1"></i>
+                {% if pago %}Guardar Cambios{% else %}Registrar Pago{% endif %}
+            </button>
+            <a href="/panel/pagos/" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+</div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+/* Validación frontend: monto > 0 */
+document.getElementById('form-pago').addEventListener('submit', function(e) {
+    const monto = parseFloat(document.querySelector('[name="monto"]').value);
+    if (isNaN(monto) || monto <= 0) {
+        e.preventDefault();
+        alert('El monto debe ser mayor a 0.');
+    }
+});
+</script>
+{% endblock %}

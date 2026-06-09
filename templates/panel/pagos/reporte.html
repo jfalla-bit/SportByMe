@@ -1,0 +1,217 @@
+{% extends 'panel/base_panel.html' %}
+{% block title %}Reporte de Pagos{% endblock %}
+{% block nav_reportes %}active{% endblock %}
+{% block page_title %}Reporte Financiero de Pagos{% endblock %}
+
+{% block content %}
+
+<!-- Totales globales -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card border-start border-success border-4 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">Total Cobrado</div>
+                <div class="fs-2 fw-bold text-success">${{ total_pagado }}</div>
+                <div class="text-muted small mt-1">{{ count_pagado }} pago(s)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-start border-warning border-4 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">Pendiente</div>
+                <div class="fs-2 fw-bold text-warning">${{ total_pendiente }}</div>
+                <div class="text-muted small mt-1">{{ count_pendiente }} pago(s)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-start border-danger border-4 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">Vencido</div>
+                <div class="fs-2 fw-bold text-danger">${{ total_vencido }}</div>
+                <div class="text-muted small mt-1">{{ count_vencido }} pago(s)</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-start border-primary border-4 shadow-sm">
+            <div class="card-body">
+                <div class="text-muted small">Total General</div>
+                <div class="fs-2 fw-bold text-primary">${{ total_general }}</div>
+                <div class="text-muted small mt-1">{{ count_pagado|add:count_pendiente|add:count_vencido }} pago(s)</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Próximos a vencer -->
+{% if proximos_vencer %}
+<div class="alert alert-warning mb-4">
+    <h6 class="fw-bold mb-2">
+        <i class="fas fa-clock me-2"></i>Próximos a Vencer (7 días)
+    </h6>
+    <div class="table-responsive">
+        <table class="table table-sm mb-0">
+            <thead><tr><th>Deportista</th><th>Descripción</th><th>Monto</th><th>Vence</th></tr></thead>
+            <tbody>
+                {% for p in proximos_vencer %}
+                <tr>
+                    <td>{{ p.jugador.usuario.get_full_name|default:p.jugador.usuario.username }}</td>
+                    <td class="small">{{ p.descripcion }}</td>
+                    <td class="fw-bold">${{ p.monto }}</td>
+                    <td class="fw-semibold text-danger">{{ p.fecha_vencimiento|date:"d/m/Y" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<div class="row g-4">
+
+    <!-- Ingresos por mes -->
+    <div class="col-md-6">
+        <div class="content-card h-100">
+            <h6 class="fw-bold mb-3">
+                <i class="fas fa-calendar-alt me-2 text-success"></i>Ingresos Cobrados por Mes
+            </h6>
+            {% if por_mes %}
+            <table class="table table-sm table-hover">
+                <thead class="table-light">
+                    <tr><th>Mes</th><th>Cantidad</th><th>Total</th></tr>
+                </thead>
+                <tbody>
+                    {% for row in por_mes %}
+                    <tr>
+                        <td>{{ row.mes|date:"F Y" }}</td>
+                        <td><span class="badge bg-secondary">{{ row.cantidad }}</span></td>
+                        <td class="fw-bold text-success">${{ row.total }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-muted text-center py-3">Sin datos de pagos cobrados.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Pagos por equipo -->
+    <div class="col-md-6">
+        <div class="content-card h-100">
+            <h6 class="fw-bold mb-3">
+                <i class="fas fa-shield-alt me-2 text-primary"></i>Pagos por Equipo
+            </h6>
+            {% if por_equipo %}
+            <table class="table table-sm table-hover">
+                <thead class="table-light">
+                    <tr><th>Equipo</th><th>Cobrado</th><th>Pendientes</th><th>Vencidos</th></tr>
+                </thead>
+                <tbody>
+                    {% for row in por_equipo %}
+                    <tr>
+                        <td><strong>{{ row.jugador__equipo__nombre }}</strong></td>
+                        <td class="text-success fw-bold">${{ row.pagados|default:"0" }}</td>
+                        <td>
+                            {% if row.pendientes > 0 %}
+                            <span class="badge bg-warning text-dark">{{ row.pendientes }}</span>
+                            {% else %}<span class="text-muted">0</span>{% endif %}
+                        </td>
+                        <td>
+                            {% if row.vencidos > 0 %}
+                            <span class="badge bg-danger">{{ row.vencidos }}</span>
+                            {% else %}<span class="text-muted">0</span>{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-muted text-center py-3">Sin datos por equipo.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Pagos por concepto -->
+    <div class="col-md-6">
+        <div class="content-card h-100">
+            <h6 class="fw-bold mb-3">
+                <i class="fas fa-tags me-2 text-warning"></i>Pagos por Concepto
+            </h6>
+            {% if por_concepto %}
+            <table class="table table-sm table-hover">
+                <thead class="table-light">
+                    <tr><th>Concepto</th><th>Cantidad</th><th>Total</th></tr>
+                </thead>
+                <tbody>
+                    {% for row in por_concepto %}
+                    <tr>
+                        <td>{{ row.concepto }}</td>
+                        <td><span class="badge bg-secondary">{{ row.cantidad }}</span></td>
+                        <td class="fw-bold">${{ row.total }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-muted text-center py-3">Sin datos por concepto.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Pagos por categoría -->
+    <div class="col-md-6">
+        <div class="content-card h-100">
+            <h6 class="fw-bold mb-3">
+                <i class="fas fa-layer-group me-2 text-info"></i>Pagos por Categoría
+            </h6>
+            {% if por_categoria %}
+            <table class="table table-sm table-hover">
+                <thead class="table-light">
+                    <tr><th>Categoría</th><th>Cantidad</th><th>Total</th></tr>
+                </thead>
+                <tbody>
+                    {% for row in por_categoria %}
+                    <tr>
+                        <td><strong>{{ row.jugador__equipo__categoria__nombre }}</strong></td>
+                        <td><span class="badge bg-secondary">{{ row.cantidad }}</span></td>
+                        <td class="fw-bold">${{ row.total }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <p class="text-muted text-center py-3">Sin datos por categoría.</p>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
+
+<div class="mt-4 d-flex gap-2 flex-wrap">
+    <a href="/panel/pagos/" class="btn btn-outline-primary">
+        <i class="fas fa-list me-1"></i>Ver todos los pagos
+    </a>
+    <a href="/panel/pagos/crear/" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>Registrar pago
+    </a>
+    <a href="/panel/reportes/asistencia/" class="btn btn-outline-secondary">
+        <i class="fas fa-clipboard-check me-1"></i>Rep. Asistencia
+    </a>
+    <a href="/panel/reportes/entrenamientos/" class="btn btn-outline-secondary">
+        <i class="fas fa-dumbbell me-1"></i>Rep. Entrenamientos
+    </a>
+    <a href="/panel/reportes/partidos/" class="btn btn-outline-secondary">
+        <i class="fas fa-futbol me-1"></i>Rep. Partidos
+    </a>
+    <a href="/panel/reportes/deportistas/" class="btn btn-outline-secondary">
+        <i class="fas fa-running me-1"></i>Rep. Deportistas
+    </a>
+    <a href="/panel/reportes/financiero/" class="btn btn-outline-secondary">
+        <i class="fas fa-file-invoice-dollar me-1"></i>Rep. Financiero
+    </a>
+</div>
+
+{% endblock %}

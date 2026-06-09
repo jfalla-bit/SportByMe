@@ -1,0 +1,127 @@
+{% extends 'entrenador/base_entrenador.html' %}
+{% block title %}Reporte de Partidos{% endblock %}
+{% block nav_partidos %}active{% endblock %}
+{% block page_title %}Reporte de Partidos{% endblock %}
+
+{% block content %}
+<div class="content-card mb-4">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label small fw-bold">Equipo</label>
+            <select name="equipo" class="form-select">
+                <option value="">Todos</option>
+                {% for eq in equipos %}
+                <option value="{{ eq.id }}" {% if equipo_id == eq.id|stringformat:"s" %}selected{% endif %}>{{ eq.nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small fw-bold">Desde</label>
+            <input type="date" name="fecha_desde" value="{{ fecha_desde }}" class="form-control">
+        </div>
+        <div class="col-md-2">
+            <label class="form-label small fw-bold">Hasta</label>
+            <input type="date" name="fecha_hasta" value="{{ fecha_hasta }}" class="form-control">
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+            <button type="submit" class="btn btn-warning w-100"><i class="fas fa-search me-1"></i>Filtrar</button>
+            <a href="/entrenador/reportes/partidos/" class="btn btn-outline-secondary"><i class="fas fa-times"></i></a>
+        </div>
+    </form>
+</div>
+
+<div class="content-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0">
+            <i class="fas fa-futbol me-2 text-warning"></i>
+            Partidos — <span class="text-muted">{{ total_filtrados }} resultado(s)</span>
+        </h6>
+        <div class="d-flex gap-2">
+            <a href="/panel/pdf/reporte_partidos/?{{ query_params }}" class="btn btn-danger btn-sm">
+                <i class="fas fa-file-pdf me-1"></i>PDF
+            </a>
+            <a href="/panel/csv/reporte_partidos/?{{ query_params }}" class="btn btn-success btn-sm">
+                <i class="fas fa-file-csv me-1"></i>CSV
+            </a>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Equipo propio</th>
+                    <th>Rival</th>
+                    <th>Resultado</th>
+                    <th>Cancha</th>
+                    <th>Estadísticas</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in partidos %}
+                <tr>
+                    <td>{{ p.fecha|date:"d/m/Y" }}</td>
+                    <td>{{ p.hora|time:"H:i" }}</td>
+                    <td><strong>{{ p.equipo_propio.nombre }}</strong></td>
+                    <td>{{ p.equipo_rival }}</td>
+                    <td class="text-nowrap">
+                        {% if p.goles_favor is not None %}
+                            <span class="fw-bold fs-6">{{ p.goles_favor }} – {{ p.goles_contra }}</span>
+                            {% if p.goles_favor > p.goles_contra %}
+                                <span class="badge bg-success ms-1">Victoria</span>
+                            {% elif p.goles_favor < p.goles_contra %}
+                                <span class="badge bg-danger ms-1">Derrota</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark ms-1">Empate</span>
+                            {% endif %}
+                        {% else %}
+                            <span class="text-muted">Pendiente</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ p.cancha|default:"—" }}</td>
+                    <td>
+                        {% with stats=p.estadisticas.all %}
+                        {% if stats %}
+                        <button class="btn btn-sm btn-outline-secondary" type="button"
+                                data-bs-toggle="collapse" data-bs-target="#stats-{{ p.id }}">
+                            <i class="fas fa-chart-bar me-1"></i>{{ stats|length }} jugador(es)
+                        </button>
+                        <div class="collapse mt-2" id="stats-{{ p.id }}">
+                            <table class="table table-sm table-bordered mb-0">
+                                <thead class="table-dark">
+                                    <tr><th>Jugador</th><th>G</th><th>A</th><th>🟨</th><th>🟥</th><th>Cal.</th></tr>
+                                </thead>
+                                <tbody>
+                                {% for s in stats %}
+                                <tr>
+                                    <td>{{ s.jugador.usuario.get_full_name|default:s.jugador.usuario.username }}</td>
+                                    <td>{{ s.goles }}</td>
+                                    <td>{{ s.asistencias }}</td>
+                                    <td>{% if s.tarjeta_amarilla %}✓{% else %}—{% endif %}</td>
+                                    <td>{% if s.tarjeta_roja %}✓{% else %}—{% endif %}</td>
+                                    <td>{{ s.calificacion|default:"—" }}</td>
+                                </tr>
+                                {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                            <span class="text-muted small">Sin estadísticas</span>
+                        {% endif %}
+                        {% endwith %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="text-center text-muted py-4">
+                        <i class="fas fa-search me-2"></i>No se encontraron partidos con los filtros aplicados.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

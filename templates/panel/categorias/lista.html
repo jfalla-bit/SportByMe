@@ -1,0 +1,100 @@
+{% extends 'panel/base_panel.html' %}
+{% block title %}Categorías{% endblock %}
+{% block nav_categorias %}active{% endblock %}
+{% block page_title %}Gestión de Categorías{% endblock %}
+{% block content %}
+<div class="content-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0"><i class="fas fa-tags me-2 text-primary"></i>Categorías</h6>
+        <a href="/panel/categorias/crear/" class="btn btn-primary btn-sm"><i class="fas fa-plus me-1"></i>Nueva</a>
+    </div>
+
+    <!-- Filtros -->
+    <form method="get" class="row g-2 mb-3 p-3 bg-light rounded">
+        <div class="col-md-5">
+            <input type="text" name="buscar" class="form-control form-control-sm"
+                   placeholder="Buscar por nombre..." value="{{ buscar }}">
+        </div>
+        <div class="col-md-4">
+            <select name="subcategoria" class="form-select form-select-sm">
+                <option value="">Todos los rangos de edad</option>
+                {% for value, label in subcategorias %}
+                <option value="{{ value }}" {% if subcategoria == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3 d-flex gap-1">
+            <button type="submit" class="btn btn-primary btn-sm">
+                <i class="fas fa-search"></i>
+            </button>
+            <a href="/panel/categorias/" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-times"></i>
+            </a>
+        </div>
+    </form>
+
+    {% if buscar or subcategoria %}
+    <div class="alert alert-info py-2 mb-3">
+        <i class="fas fa-filter me-1"></i>
+        <strong>{{ categorias|length }}</strong> categoría(s) encontrada(s).
+    </div>
+    {% endif %}
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Nombre</th>
+                <th>Subcategoría</th>
+                <th>Rango de edad</th>
+                <th>Descripción</th>
+                <th>Equipos</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in categorias %}
+            <tr>
+                <td><strong>{{ c.nombre }}</strong></td>
+                <td>
+                    {% if c.subcategoria %}
+                    <span class="badge bg-primary">{{ c.get_subcategoria_display }}</span>
+                    {% else %}
+                    <span class="text-muted small">—</span>
+                    {% endif %}
+                </td>
+                <td class="small">
+                    {% if c.edad_minima and c.edad_maxima %}
+                        {% if c.edad_minima == c.edad_maxima %}
+                            {{ c.edad_minima }} años
+                        {% else %}
+                            {{ c.edad_minima }} – {{ c.edad_maxima }} años
+                        {% endif %}
+                    {% else %}
+                    <span class="text-muted">—</span>
+                    {% endif %}
+                </td>
+                <td class="text-muted small">{{ c.descripcion|truncatechars:40|default:"—" }}</td>
+                <td><span class="badge bg-info">{{ c.num_equipos }}</span></td>
+                <td><span class="badge {% if c.activo %}bg-success{% else %}bg-secondary{% endif %}">{% if c.activo %}Activo{% else %}Inactivo{% endif %}</span></td>
+                <td>
+                    <a href="/panel/categorias/{{ c.id }}/editar/" class="btn btn-outline-warning btn-action me-1"><i class="fas fa-edit"></i></a>
+                    {% if c.num_equipos == 0 %}
+                    <a href="/panel/categorias/{{ c.id }}/eliminar/" class="btn btn-outline-danger btn-action"
+                       onclick="return confirm('¿Eliminar la categoría {{ c.nombre }}?')">
+                        <i class="fas fa-trash"></i>
+                    </a>
+                    {% else %}
+                    <button class="btn btn-outline-danger btn-action" disabled
+                            title="Tiene {{ c.num_equipos }} equipo(s) asociado(s). Eliminá o reasigná los equipos primero.">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="7" class="text-center text-muted py-4">Sin categorías</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -1,0 +1,99 @@
+{% extends 'deportista/base_deportista.html' %}
+{% block title %}Mi Calendario{% endblock %}
+{% block nav_calendario %}active{% endblock %}
+{% block page_title %}Mi Calendario{% endblock %}
+
+{% block content %}
+{% if not jugador or not jugador.equipo %}
+<div class="content-card text-center py-5">
+    <i class="fas fa-calendar-alt fa-3x text-muted mb-3"></i>
+    <h5 class="text-muted">No estás asignado a ningún equipo</h5>
+    <p class="text-muted">Cuando te asignen a un equipo, verás aquí tu calendario.</p>
+</div>
+{% else %}
+
+<!-- Entrenamientos -->
+<div class="content-card mb-4">
+    <h6 class="fw-bold mb-3">
+        <i class="fas fa-dumbbell me-2 text-warning"></i>
+        Entrenamientos — <span class="badge bg-warning text-dark">{{ jugador.equipo.nombre }}</span>
+    </h6>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Entrenamiento</th>
+                    <th>Fecha</th>
+                    <th>Horario</th>
+                    <th>Cancha / Lugar</th>
+                    <th>Equipo</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for e in entrenamientos %}
+                <tr>
+                    <td>
+                        <strong>{{ e.titulo }}</strong>
+                        {% if e.descripcion %}
+                        <div class="text-muted small">{{ e.descripcion|truncatechars:50 }}</div>
+                        {% endif %}
+                    </td>
+                    <td class="small">{{ e.fecha|date:"d/m/Y" }}</td>
+                    <td class="small text-muted">{{ e.hora_inicio|time:"H:i" }} - {{ e.hora_fin|time:"H:i" }}</td>
+                    <td class="small text-muted">{{ e.lugar|default:"—" }}</td>
+                    <td class="small">{{ e.equipo.nombre }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center text-muted py-4">No hay entrenamientos registrados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Partidos -->
+<div class="content-card">
+    <h6 class="fw-bold mb-3">
+        <i class="fas fa-futbol me-2 text-primary"></i>
+        Partidos — <span class="badge bg-primary">{{ jugador.equipo.nombre }}</span>
+    </h6>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th>Partido</th>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Cancha</th>
+                    <th>Equipo</th>
+                    <th class="text-center">Resultado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in partidos %}
+                <tr>
+                    <td>
+                        <strong>{{ p.equipo_propio.nombre }}</strong>
+                        <span class="text-muted small"> vs {{ p.equipo_rival }}</span>
+                    </td>
+                    <td class="small">{{ p.fecha|date:"d/m/Y" }}</td>
+                    <td class="small text-muted">{{ p.hora|time:"H:i" }}</td>
+                    <td class="small text-muted">{{ p.cancha|default:"—" }}</td>
+                    <td class="small">{{ p.equipo_propio.nombre }}</td>
+                    <td class="text-center">
+                        {% if p.goles_favor is not None %}
+                        <span class="badge bg-dark">{{ p.goles_favor }} — {{ p.goles_contra }}</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Por jugar</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="6" class="text-center text-muted py-4">No hay partidos registrados.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

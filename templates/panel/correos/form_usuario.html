@@ -1,0 +1,52 @@
+{% extends 'panel/base_panel.html' %}
+{% block title %}Enviar Mensaje{% endblock %}
+{% block nav_correos %}active{% endblock %}
+{% block page_title %}Enviar Mensaje a Usuario{% endblock %}
+
+{% block content %}
+<div class="content-card" style="max-width:700px;">
+    <h6 class="fw-bold mb-4">
+        <i class="fas fa-paper-plane me-2 text-primary"></i>Enviar mensaje a un usuario específico
+    </h6>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Destinatario</label>
+            <select name="usuario" class="form-select" required>
+                <option value="">Seleccionar usuario...</option>
+                {% for u in usuarios %}
+                <option value="{{ u.id }}"
+                    {% if post_data.usuario == u.id|stringformat:"s" %}selected{% endif %}>
+                    {{ u.get_full_name|default:u.username }}
+                    ({{ u.get_role_display }})
+                    {% if u.email %} — {{ u.email }}{% endif %}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label fw-semibold">Asunto</label>
+            <input type="text" name="asunto" class="form-control"
+                   placeholder="Asunto del mensaje"
+                   value="{{ post_data.asunto|default:'' }}" required>
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label fw-semibold">Mensaje</label>
+            <textarea name="mensaje" class="form-control" rows="7"
+                      placeholder="Escribe el mensaje aquí..." required>{{ post_data.mensaje|default:'' }}</textarea>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-paper-plane me-2"></i>Enviar mensaje
+            </button>
+            <a href="/panel/correos/" class="btn btn-outline-secondary">Envío masivo</a>
+            <a href="/admin-dashboard/" class="btn btn-outline-secondary">Cancelar</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
