@@ -11,8 +11,8 @@ from django.shortcuts import get_object_or_404, render, redirect
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 
-from core.models import Finanza, Notificacion, Pago
-from .models import WompiTransaccion
+from core.models import Finanza, Notificacion, Pago, PagoEntrenador
+from .models import WompiTransaccion, WompiTransaccionNomina
 
 
 def _firma_integridad(referencia, monto_centavos, moneda='COP'):
@@ -64,10 +64,7 @@ def iniciar_pago(request, pago_id):
         monto_en_centavos=monto_centavos,
     )
 
-    if request.user.role == 'acudiente':
-        redirect_url = request.build_absolute_uri('/payments/retorno/')
-    else:
-        redirect_url = request.build_absolute_uri('/payments/retorno/')
+    redirect_url = request.build_absolute_uri('/payments/retorno/')
 
     return render(request, 'payments/checkout.html', {
         'pago':           pago,
@@ -83,7 +80,7 @@ def iniciar_pago(request, pago_id):
 
 @login_required
 def retorno_pago(request):
-    """Wompi redirige aquí tras el pago. Consulta el estado real y muestra resultado."""
+    """Wompi redirige aqui tras el pago. Consulta el estado real y muestra resultado."""
     referencia = request.GET.get('id') or request.GET.get('reference', '')
 
     transaccion = (
@@ -91,7 +88,6 @@ def retorno_pago(request):
         or WompiTransaccion.objects.filter(referencia=referencia).first()
     )
     if not transaccion:
-        # Wompi también puede enviar el transaction id directamente
         wompi_tx_id = request.GET.get('id', '')
         transaccion = WompiTransaccion.objects.filter(wompi_id=wompi_tx_id).first()
     if not transaccion:
@@ -112,9 +108,9 @@ def webhook_wompi(request):
     if request.method != 'POST':
         return HttpResponse(status=405)
 
-    body      = request.body
-    firma     = request.headers.get('X-Event-Checksum', '')
-    esperada  = hmac.new(
+    body     = request.body
+    firma    = request.headers.get('X-Event-Checksum', '')
+    esperada = hmac.new(
         settings.WOMPI_EVENTS_SECRET.encode(), body, hashlib.sha256
     ).hexdigest()
 
@@ -153,19 +149,85 @@ def webhook_wompi(request):
     return HttpResponse(status=200)
 
 
+# ── Nomina Wompi (Admin) ──────────────────────────────────────────────────────
+
+@login_required
+def iniciar_pago_nomina(request, nomina_id):
+    """Muestra el widget de Wompi para que el admin pague la nomina de un entrenador."""
+    if request.user.role != 'administrador':
+        return render(request, 'payments/error.html', {
+            'mensaje': 'Solo el administrador puede pagar nominas.'
+        })
+
+    nomina = get_object_or_404(PagoEntrenador, id=nomina_id)
+
+    if nomina.estado == 'pagado':
+        return render(request, 'payments/error.html', {
+            'mensaje': 'Esta nomina ya fue pagada.'
+        })
+
+    referencia     = f'NOM-{nomina.id}-{uuid.uuid4().hex[:8].upper()}'
+    monto_centavos = int(nomina.monto * 100)
+
+    WompiTransaccionNomina.objects.create(
+        nomina=nomina,
+        pagador=request.user,
+        referencia=referencia,
+        monto_en_centavos=monto_centavos,
+    )
+
+    redirect_url  = request.build_absolute_uri('/payments/retorno-nomina/')
+    nombre_entrenador = nomina.entrenador.get_full_name() or nomina.entrenador.username
+
+    return render(request, 'payments/checkout_nomina.html', {
+        'nomina':         nomina,
+        'referencia':     referencia,
+        'monto_centavos': monto_centavos,
+        'public_key':     settings.WOMPI_PUBLIC_KEY,
+        'redirect_url':   redirect_url,
+        'descripcion':    f'Nomina {nomina.mes}/{nomina.anio} - {nombre_entrenador}',
+        'email':          request.user.email,
+        'firma':          _firma_integridad(referencia, monto_centavos),
+    })
+
+
+@login_required
+def retorno_pago_nomina(request):
+    """Wompi redirige aqui tras el pago de nomina."""
+    referencia = request.GET.get('id') or request.GET.get('reference', '')
+
+    transaccion = (
+        WompiTransaccionNomina.objects.filter(wompi_id=referencia).first()
+        or WompiTransaccionNomina.objects.filter(referencia=referencia).first()
+    )
+    if not transaccion:
+        wompi_tx_id = request.GET.get('id', '')
+        transaccion = WompiTransaccionNomina.objects.filter(wompi_id=wompi_tx_id).first()
+    if not transaccion:
+        return redirect('/panel/nomina/')
+
+    _actualizar_desde_wompi_nomina(transaccion)
+
+    return render(request, 'payments/resultado_nomina.html', {
+        'exito':       transaccion.estado == 'APPROVED',
+        'nomina':      transaccion.nomina,
+        'transaccion': transaccion,
+    })
+
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _actualizar_desde_wompi(transaccion):
-    """Consulta el estado actual de la transacción en la API de Wompi."""
+    """Consulta el estado actual de la transaccion en la API de Wompi."""
     try:
         headers = {'Authorization': f'Bearer {settings.WOMPI_PRIVATE_KEY}'}
         if transaccion.wompi_id:
-            url = f'{settings.WOMPI_API_URL}/transactions/{transaccion.wompi_id}'
+            url  = f'{settings.WOMPI_API_URL}/transactions/{transaccion.wompi_id}'
             resp = requests.get(url, headers=headers, timeout=10)
             if resp.status_code == 200:
                 tx = resp.json().get('data', {})
         else:
-            url = f'{settings.WOMPI_API_URL}/transactions?reference={transaccion.referencia}'
+            url  = f'{settings.WOMPI_API_URL}/transactions?reference={transaccion.referencia}'
             resp = requests.get(url, headers=headers, timeout=10)
             if resp.status_code == 200:
                 lista = resp.json().get('data', [])
@@ -184,13 +246,42 @@ def _actualizar_desde_wompi(transaccion):
         pass
 
 
+def _actualizar_desde_wompi_nomina(transaccion):
+    """Consulta el estado actual de la transaccion de nomina en la API de Wompi."""
+    try:
+        headers = {'Authorization': f'Bearer {settings.WOMPI_PRIVATE_KEY}'}
+        if transaccion.wompi_id:
+            url  = f'{settings.WOMPI_API_URL}/transactions/{transaccion.wompi_id}'
+            resp = requests.get(url, headers=headers, timeout=10)
+            if resp.status_code == 200:
+                tx = resp.json().get('data', {})
+        else:
+            url  = f'{settings.WOMPI_API_URL}/transactions?reference={transaccion.referencia}'
+            resp = requests.get(url, headers=headers, timeout=10)
+            if resp.status_code == 200:
+                lista = resp.json().get('data', [])
+                tx = lista[0] if lista else {}
+            else:
+                return
+
+        transaccion.wompi_id = tx.get('id', transaccion.wompi_id)
+        transaccion.estado   = tx.get('status', transaccion.estado)
+        transaccion.metodo   = tx.get('payment_method_type', transaccion.metodo)
+        transaccion.save()
+
+        if transaccion.estado == 'APPROVED':
+            _confirmar_pago_nomina(transaccion)
+    except Exception:
+        pass
+
+
 def _confirmar_pago(transaccion):
     """Marca el Pago como pagado y genera el ingreso en Finanzas."""
     pago = transaccion.pago
     if pago.estado == 'pagado':
         return
 
-    metodo_display = 'tarjeta' if 'CARD' in transaccion.metodo.upper() else 'transferencia'
+    metodo_display   = 'tarjeta' if 'CARD' in transaccion.metodo.upper() else 'transferencia'
     pago.estado      = 'pagado'
     pago.fecha_pago  = timezone.now().date()
     pago.metodo_pago = metodo_display
@@ -207,7 +298,7 @@ def _confirmar_pago(transaccion):
         Finanza.objects.create(
             tipo='ingreso',
             categoria=concepto_cat.get(pago.concepto, 'otro'),
-            descripcion=f'Wompi: {pago.descripcion} — {pago.jugador.usuario.get_full_name() or pago.jugador.usuario.username}',
+            descripcion=f'Wompi: {pago.descripcion} - {pago.jugador.usuario.get_full_name() or pago.jugador.usuario.username}',
             monto=pago.monto,
             fecha=pago.fecha_pago,
             registrado_por=None,
@@ -222,7 +313,42 @@ def _confirmar_pago(transaccion):
             f'Concepto: {pago.get_concepto_display()}\n'
             f'Monto:    ${pago.monto}\n'
             f'Fecha:    {pago.fecha_pago.strftime("%d/%m/%Y")}\n'
-            f'Método:   Wompi ({transaccion.metodo})'
+            f'Metodo:   Wompi ({transaccion.metodo})'
         ),
         emisor=None,
+    )
+
+
+def _confirmar_pago_nomina(transaccion):
+    """Marca la Nomina como pagada, genera egreso en Finanzas y notifica al entrenador."""
+    nomina = transaccion.nomina
+    if nomina.estado == 'pagado':
+        return
+
+    metodo_display     = 'tarjeta' if 'CARD' in transaccion.metodo.upper() else 'transferencia'
+    nomina.estado      = 'pagado'
+    nomina.fecha_pago  = timezone.now().date()
+    nomina.metodo_pago = metodo_display
+    nomina.save()
+
+    Finanza.objects.create(
+        tipo='egreso',
+        categoria='otro',
+        descripcion=f'Nomina Wompi: {nomina.entrenador.get_full_name() or nomina.entrenador.username} - {nomina.mes}/{nomina.anio}',
+        monto=nomina.monto,
+        fecha=nomina.fecha_pago,
+        registrado_por=transaccion.pagador,
+    )
+
+    Notificacion.objects.create(
+        usuario=nomina.entrenador,
+        asunto=f'Nomina pagada: {nomina.mes}/{nomina.anio}',
+        mensaje=(
+            f'Tu nomina ha sido pagada exitosamente.\n\n'
+            f'Mes:    {nomina.mes}/{nomina.anio}\n'
+            f'Monto:  ${nomina.monto}\n'
+            f'Fecha:  {nomina.fecha_pago.strftime("%d/%m/%Y")}\n'
+            f'Metodo: Wompi ({transaccion.metodo})'
+        ),
+        emisor=transaccion.pagador,
     )

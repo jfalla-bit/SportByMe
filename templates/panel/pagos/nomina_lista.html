@@ -1,6 +1,8 @@
 {% extends 'panel/base_panel.html' %}
 {% block title %}Nómina Entrenadores{% endblock %}
 {% block nav_nomina %}active{% endblock %}
+{% block nav_finanzas_open %}true{% endblock %}
+{% block nav_finanzas_show %}show{% endblock %}
 {% block page_title %}Nómina de Entrenadores{% endblock %}
 
 {% block content %}
@@ -83,15 +85,17 @@
                     <th>Fecha Pago</th>
                     <th>Descripción</th>
                     <th>Estado</th>
-                    <th>Acciones</th>
+                    <th style="min-width:220px">Acciones</th>
                 </tr>
             </thead>
             <tbody>
                 {% for n in nominas %}
                 <tr class="{% if n.estado == 'pagado' %}table-success bg-opacity-10{% endif %}">
-                    <td><strong>{{ n.entrenador.get_full_name|default:n.entrenador.username }}</strong></td>
+                    <td><strong>{{ n.entrenador.get_full_name|default:n.entrenador.username }}</strong><br>
+                        <small class="text-muted">{{ n.entrenador.email }}</small>
+                    </td>
                     <td>{{ n.mes|stringformat:"02d" }}/{{ n.anio }}</td>
-                    <td class="fw-bold">${{ n.monto }}</td>
+                    <td class="fw-bold text-success">${{ n.monto }}</td>
                     <td class="small text-muted">
                         {% if n.metodo_pago %}{{ n.get_metodo_pago_display }}{% else %}—{% endif %}
                     </td>
@@ -101,26 +105,39 @@
                     <td class="small text-muted">{{ n.descripcion|truncatechars:30|default:"—" }}</td>
                     <td>
                         <span class="badge {% if n.estado == 'pagado' %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                            {% if n.estado == 'pagado' %}<i class="fas fa-check-circle me-1"></i>{% else %}<i class="fas fa-clock me-1"></i>{% endif %}
                             {{ n.get_estado_display }}
                         </span>
                     </td>
                     <td>
                         {% if n.estado != 'pagado' %}
-                        <a href="/panel/nomina/{{ n.id }}/marcar-pagado/"
-                           class="btn btn-success btn-action me-1" title="Marcar como pagado"
-                           onclick="return confirm('¿Marcar como PAGADO?')">
-                            <i class="fas fa-check"></i>
-                        </a>
+                        <div class="d-flex flex-column gap-1">
+                            <a href="/payments/pagar-nomina/{{ n.id }}/"
+                               class="btn btn-success btn-sm w-100"
+                               title="Pagar con tarjeta o PSE mediante Wompi">
+                                <i class="fas fa-credit-card me-1"></i>Pagar con Wompi
+                            </a>
+                            <a href="/panel/nomina/{{ n.id }}/marcar-pagado/"
+                               class="btn btn-outline-primary btn-sm w-100"
+                               title="Marcar como pagado si el pago fue en efectivo o transferencia directa"
+                               onclick="return confirm('¿Marcar esta nómina como PAGADA manualmente?')">
+                                <i class="fas fa-check me-1"></i>Marcar Pagado
+                            </a>
+                        </div>
+                        {% else %}
+                        <span class="text-muted small"><i class="fas fa-lock me-1"></i>Pagada</span>
                         {% endif %}
-                        <a href="/panel/nomina/{{ n.id }}/editar/"
-                           class="btn btn-outline-warning btn-action me-1" title="Editar">
-                            <i class="fas fa-edit"></i>
-                        </a>
-                        <a href="/panel/nomina/{{ n.id }}/eliminar/"
-                           class="btn btn-outline-danger btn-action" title="Eliminar"
-                           onclick="return confirm('¿Eliminar este pago de nómina?')">
-                            <i class="fas fa-trash"></i>
-                        </a>
+                        <div class="d-flex gap-1 mt-1">
+                            <a href="/panel/nomina/{{ n.id }}/editar/"
+                               class="btn btn-outline-warning btn-sm flex-fill" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="/panel/nomina/{{ n.id }}/eliminar/"
+                               class="btn btn-outline-danger btn-sm flex-fill" title="Eliminar"
+                               onclick="return confirm('¿Eliminar este registro de nómina?')">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </div>
                     </td>
                 </tr>
                 {% empty %}

@@ -133,38 +133,85 @@
             <i class="fas fa-chart-bar me-2"></i>Reportes
         </a>
 
+        <!-- Reportes desplegable -->
+        <a href="#submenu-reportes" data-bs-toggle="collapse" class="nav-link d-flex justify-content-between align-items-center"
+           aria-expanded="{% block nav_reportes_open %}false{% endblock %}">
+            <span><i class="fas fa-file-alt me-2"></i>Reportes</span>
+            <i class="fas fa-chevron-down" style="font-size:0.7rem;"></i>
+        </a>
+        <div class="collapse {% block nav_reportes_show %}{% endblock %}" id="submenu-reportes">
+            <a href="/panel/reportes/deportistas/" class="nav-link {% block nav_rep_deportistas %}{% endblock %}" style="padding-left:38px;font-size:0.88rem;">
+                <i class="fas fa-running me-2"></i>Deportistas
+            </a>
+            <a href="/panel/reportes/asistencia/" class="nav-link {% block nav_rep_asistencia %}{% endblock %}" style="padding-left:38px;font-size:0.88rem;">
+                <i class="fas fa-clipboard-list me-2"></i>Asistencia
+            </a>
+            <a href="/panel/reportes/entrenamientos/" class="nav-link {% block nav_rep_entrenamientos %}{% endblock %}" style="padding-left:38px;font-size:0.88rem;">
+                <i class="fas fa-dumbbell me-2"></i>Entrenamientos
+            </a>
+            <a href="/panel/reportes/partidos/" class="nav-link {% block nav_rep_partidos %}{% endblock %}" style="padding-left:38px;font-size:0.88rem;">
+                <i class="fas fa-futbol me-2"></i>Partidos
+            </a>
+            <a href="/panel/reportes/financiero/" class="nav-link {% block nav_rep_financiero %}{% endblock %}" style="padding-left:38px;font-size:0.88rem;">
+                <i class="fas fa-dollar-sign me-2"></i>Financiero
+            </a>
+            <a href="/panel/reportes/pagos/" class="nav-link" style="padding-left:38px;font-size:0.88rem;">
+                <i class="fas fa-chart-pie me-2"></i>Resumen Pagos
+            </a>
+            <a href="/panel/reportes/rendimiento/" class="nav-link" style="padding-left:38px;font-size:0.88rem;">
+                <i class="fas fa-chart-bar me-2"></i>Rendimiento
+            </a>
+        </div>
+
         <div class="sidebar-section mt-2">Administración</div>
-        <a href="/panel/finanzas/" class="nav-link {% block nav_finanzas %}{% endblock %}">
-            <i class="fas fa-dollar-sign me-2"></i>Finanzas
+        <!-- Finanzas desplegable -->
+        <a href="#submenu-finanzas" data-bs-toggle="collapse" class="nav-link d-flex justify-content-between align-items-center"
+           aria-expanded="{% block nav_finanzas_open %}false{% endblock %}">
+            <span><i class="fas fa-dollar-sign me-2"></i>Finanzas</span>
+            <i class="fas fa-chevron-down" style="font-size:0.7rem;"></i>
         </a>
-        <a href="/panel/pagos/" class="nav-link {% block nav_pagos %}{% endblock %}">
-            <i class="fas fa-money-bill-wave me-2"></i>Pagos
-        </a>
-        <a href="/panel/nomina/" class="nav-link {% block nav_nomina %}{% endblock %}">
-            <i class="fas fa-user-tie me-2"></i>Nómina Entrenadores
-        </a>
-        <a href="/panel/facturas/" class="nav-link {% block nav_facturas %}{% endblock %}">
-            <i class="fas fa-file-invoice me-2"></i>Facturas
-        </a>
-        <a href="/panel/conceptos/" class="nav-link {% block nav_conceptos %}{% endblock %}">
-            <i class="fas fa-tags me-2"></i>Conceptos de Pago
-        </a>
+        <div class="collapse {% block nav_finanzas_show %}{% endblock %}" id="submenu-finanzas">
+            <a href="/panel/finanzas/" class="nav-link {% block nav_finanzas %}{% endblock %}" style="padding-left:38px;font-size:0.88rem;">
+                <i class="fas fa-dollar-sign me-2"></i>Finanzas
+            </a>
+            <a href="/panel/pagos/" class="nav-link {% block nav_pagos %}{% endblock %}" style="padding-left:38px;font-size:0.88rem;">
+                <i class="fas fa-money-bill-wave me-2"></i>Pagos
+            </a>
+            <a href="/panel/nomina/" class="nav-link {% block nav_nomina %}{% endblock %}" style="padding-left:38px;font-size:0.88rem;">
+                <i class="fas fa-user-tie me-2"></i>Nómina Entrenadores
+            </a>
+            <a href="/panel/facturas/" class="nav-link {% block nav_facturas %}{% endblock %}" style="padding-left:38px;font-size:0.88rem;">
+                <i class="fas fa-file-invoice me-2"></i>Facturas
+            </a>
+            <a href="/panel/conceptos/" class="nav-link {% block nav_conceptos %}{% endblock %}" style="padding-left:38px;font-size:0.88rem;">
+                <i class="fas fa-tags me-2"></i>Conceptos de Pago
+            </a>
+        </div>
 
         <div class="sidebar-section mt-2">Comunicación</div>
-            <i class="fas fa-envelope me-2"></i>Enviar Correos
+        <!-- Comunicación desplegable -->
+        <a href="#submenu-comunicacion" data-bs-toggle="collapse" class="nav-link d-flex justify-content-between align-items-center"
+           aria-expanded="{% block nav_comunicacion_open %}false{% endblock %}">
+            <span><i class="fas fa-envelope me-2"></i>Comunicación</span>
+            <i class="fas fa-chevron-down" style="font-size:0.7rem;"></i>
         </a>
-        <a href="/panel/correos/usuario/" class="nav-link {% block nav_correos_usuario %}{% endblock %}">
-            <i class="fas fa-user-edit me-2"></i>Msg. Individual
-        </a>
-        <a href="/panel/correos/enviados/" class="nav-link {% block nav_correos_enviados %}{% endblock %}">
-            <i class="fas fa-paper-plane me-2"></i>Msgs. Enviados
-        </a>
-        <a href="/panel/notificaciones/" class="nav-link {% block nav_notificaciones %}{% endblock %}">
-            <i class="fas fa-bell me-2"></i>Notificaciones
-        </a>
-        <a href="/panel/carga-masiva/" class="nav-link {% block nav_carga %}{% endblock %}">
-            <i class="fas fa-file-upload me-2"></i>Carga Masiva
-        </a>
+        <div class="collapse {% block nav_comunicacion_show %}{% endblock %}" id="submenu-comunicacion">
+            <a href="/panel/correos/" class="nav-link {% block nav_correos %}{% endblock %}" style="padding-left:38px;font-size:0.88rem;">
+                <i class="fas fa-envelope me-2"></i>Enviar Correos
+            </a>
+            <a href="/panel/correos/usuario/" class="nav-link {% block nav_correos_usuario %}{% endblock %}" style="padding-left:38px;font-size:0.88rem;">
+                <i class="fas fa-user-edit me-2"></i>Msg. Individual
+            </a>
+            <a href="/panel/correos/enviados/" class="nav-link {% block nav_correos_enviados %}{% endblock %}" style="padding-left:38px;font-size:0.88rem;">
+                <i class="fas fa-paper-plane me-2"></i>Msgs. Enviados
+            </a>
+            <a href="/panel/notificaciones/" class="nav-link {% block nav_notificaciones %}{% endblock %}" style="padding-left:38px;font-size:0.88rem;">
+                <i class="fas fa-bell me-2"></i>Notificaciones
+            </a>
+            <a href="/panel/carga-masiva/" class="nav-link {% block nav_carga %}{% endblock %}" style="padding-left:38px;font-size:0.88rem;">
+                <i class="fas fa-file-upload me-2"></i>Carga Masiva
+            </a>
+        </div>
 
         <div class="sidebar-section mt-2">Cuenta</div>
         <a href="/auth/logout/" class="nav-link text-danger">
