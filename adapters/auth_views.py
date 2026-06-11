@@ -113,16 +113,34 @@ def signup_view(request):
         last_name  = request.POST.get('last_name', '').strip()
         password1  = request.POST.get('password1', '').strip()
         password2  = request.POST.get('password2', '').strip()
+        birth_date_raw = request.POST.get('birth_date', '').strip()
+
+        birth_date = None
+        if birth_date_raw:
+            try:
+                from datetime import date as _date
+                birth_date = _date.fromisoformat(birth_date_raw)
+            except ValueError:
+                birth_date = None
 
         form_data = {
             'email': email,
             'first_name': first_name,
             'last_name': last_name,
+            'birth_date': birth_date_raw,
         }
 
         # Validaciones
         if not all([email, password1, password2]):
             messages.error(request, 'El correo y las contraseñas son obligatorios.')
+            return render(request, 'auth/signup.html', form_data)
+
+        if not birth_date:
+            messages.error(request, 'La fecha de nacimiento es obligatoria y debe ser válida.')
+            return render(request, 'auth/signup.html', form_data)
+
+        if not request.POST.get('acepta_politica'):
+            messages.error(request, 'Debes aceptar la política de tratamiento de datos personales para registrarte.')
             return render(request, 'auth/signup.html', form_data)
 
         if password1 != password2:
@@ -167,6 +185,7 @@ def signup_view(request):
             first_name=first_name,
             last_name=last_name,
             role='pendiente',
+            birth_date=birth_date,
         )
 
         # Redirigir al login con mensaje de éxito (sin login automático)

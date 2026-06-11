@@ -111,6 +111,21 @@
                            placeholder="7-15 dígitos">
                 </div>
 
+                <div class="col-md-4">
+                    <label class="form-label fw-semibold">Fecha de Nacimiento</label>
+                    <input type="date" name="birth_date" class="form-control"
+                           value="{% if post_data %}{{ post_data.birth_date }}{% elif usuario and usuario.birth_date %}{{ usuario.birth_date|date:'Y-m-d' }}{% endif %}">
+                    {% if usuario and usuario.birth_date %}
+                    <div class="form-text">
+                        {% if es_mayor %}
+                        <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Mayor de edad — pago directo</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark"><i class="fas fa-exclamation-circle me-1"></i>Menor de edad — pago via acudiente</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+
                 <!-- Rol -->
                 <div class="col-md-4">
                     <label class="form-label fw-semibold">

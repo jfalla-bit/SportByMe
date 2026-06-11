@@ -28,6 +28,106 @@ from .models import (
 )
 
 
+def _notificar_partido(partido, es_nuevo, emisor):
+    """
+    Crea notificacion para deportistas del equipo cuando se crea/modifica un partido.
+    """
+    accion  = 'programado' if es_nuevo else 'modificado'
+    asunto  = f'Partido {accion}: {partido.equipo_propio.nombre} vs {partido.equipo_rival}'
+    mensaje = (
+        f'Se ha {accion} un partido.\n\n'
+        f'Equipo:  {partido.equipo_propio.nombre}\n'
+        f'Rival:   {partido.equipo_rival}\n'
+        f'Fecha:   {partido.fecha.strftime("%d/%m/%Y")}\n'
+        f'Hora:    {partido.hora.strftime("%H:%M")}\n'
+        f'Lugar:   {partido.cancha or "Por confirmar"}'
+    )
+    jugadores = Jugador.objects.filter(
+        equipo=partido.equipo_propio, activo=True
+    ).select_related('usuario')
+    notifs = [
+        Notificacion(usuario=j.usuario, asunto=asunto, mensaje=mensaje, emisor=emisor)
+        for j in jugadores
+    ]
+    Notificacion.objects.bulk_create(notifs)
+    for j in jugadores:
+        if j.usuario.email and '@' in j.usuario.email:
+            try:
+                send_mail(
+                    subject=asunto,
+                    message=mensaje,
+                    from_email=django_settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[j.usuario.email],
+                    fail_silently=True,
+                )
+            except Exception:
+                pass
+
+
+def _notificar_torneo(torneo, es_nuevo, emisor):
+    """
+    Notifica a todos los deportistas activos cuando se crea/modifica un torneo.
+    """
+    accion  = 'creado' if es_nuevo else 'modificado'
+    asunto  = f'Torneo {accion}: {torneo.nombre}'
+    mensaje = (
+        f'Se ha {accion} un torneo.\n\n'
+        f'Nombre:     {torneo.nombre}\n'
+        f'Categoría:  {torneo.categoria.nombre}\n'
+        f'Inicio:     {torneo.fecha_inicio.strftime("%d/%m/%Y")}\n'
+        f'Fin:        {torneo.fecha_fin.strftime("%d/%m/%Y")}\n'
+        f'Estado:     {torneo.get_estado_display()}\n'
+        f'Lugar:      {torneo.lugar or "Por confirmar"}'
+    )
+    jugadores = Jugador.objects.filter(
+        equipo__categoria=torneo.categoria, activo=True
+    ).select_related('usuario')
+    notifs = [
+        Notificacion(usuario=j.usuario, asunto=asunto, mensaje=mensaje, emisor=emisor)
+        for j in jugadores
+    ]
+    Notificacion.objects.bulk_create(notifs)
+    for j in jugadores:
+        if j.usuario.email and '@' in j.usuario.email:
+            try:
+                send_mail(
+                    subject=asunto,
+                    message=mensaje,
+                    from_email=django_settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[j.usuario.email],
+                    fail_silently=True,
+                )
+            except Exception:
+                pass
+
+
+def _notificar_usuario_cambio(usuario, es_nuevo, emisor):
+    """
+    Notifica al usuario cuando su cuenta es creada o editada.
+    """
+    accion  = 'creada' if es_nuevo else 'actualizada'
+    asunto  = f'Tu cuenta ha sido {accion}'
+    mensaje = (
+        f'Hola {usuario.get_full_name() or usuario.username},\n\n'
+        f'Tu cuenta ha sido {accion} en el sistema.\n\n'
+        f'Usuario:   {usuario.username}\n'
+        f'Rol:       {usuario.get_role_display()}\n'
+        f'Estado:    {"Activo" if usuario.is_active else "Inactivo"}'
+    )
+    Notificacion.objects.create(usuario=usuario, asunto=asunto, mensaje=mensaje, emisor=emisor)
+    if usuario.email and '@' in usuario.email:
+        try:
+            send_mail(
+                subject=asunto,
+                message=mensaje,
+                from_email=django_settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[usuario.email],
+                fail_silently=True,
+            )
+        except Exception:
+            pass
+
+
 def _notificar_entrenamiento(entrenamiento, es_nuevo, emisor):
     """
     Crea una Notificacion para cada deportista activo del equipo
@@ -232,6 +332,15 @@ def _validar_usuario_form(request, usuario_id=None):
     Retorna (errores: list, datos: dict).
     Si errores está vacío, los datos son válidos.
     """
+    birth_date_raw = request.POST.get('birth_date', '').strip()
+    birth_date = None
+    if birth_date_raw:
+        try:
+            from datetime import date as _date
+            birth_date = _date.fromisoformat(birth_date_raw)
+        except ValueError:
+            birth_date = None
+
     datos = {
         'email':      request.POST.get('email', '').strip(),
         'first_name': request.POST.get('first_name', '').strip(),
@@ -245,6 +354,7 @@ def _validar_usuario_form(request, usuario_id=None):
         'posicion':   request.POST.get('posicion', '').strip(),
         'jugador_id': request.POST.get('jugador_id') or None,
         'parentesco': request.POST.get('parentesco', '').strip(),
+        'birth_date': birth_date,
     }
     errores = []
 
@@ -318,6 +428,7 @@ def _context_form_usuario(usuario=None, post_data=None):
         'jugador':    jugador,
         'acudiente':  acudiente,
         'jugadores_disponibles': Jugador.objects.filter(activo=True).select_related('usuario', 'equipo'),
+        'es_mayor':   _deportista_es_mayor_de_edad(usuario) if usuario else None,
     }
     if usuario:
         ctx['usuario'] = usuario
@@ -364,6 +475,7 @@ def usuario_crear(request):
             phone=datos['phone'],
             documento=datos['documento'],
             is_active=datos['is_active'],
+            birth_date=datos['birth_date'],
         )
 
         # Si es deportista, crear/actualizar perfil Jugador
@@ -377,6 +489,7 @@ def usuario_crear(request):
                 }
             )
 
+        _notificar_usuario_cambio(usuario, es_nuevo=True, emisor=request.user)
         messages.success(request, f'Usuario creado correctamente. Username asignado: {username}')
         return usuarios_lista(request)
 
@@ -413,6 +526,8 @@ def usuario_editar(request, user_id):
         usuario.phone      = datos['phone']
         usuario.documento  = datos['documento']
         usuario.is_active  = datos['is_active']
+        if datos['birth_date'] is not None:
+            usuario.birth_date = datos['birth_date']
 
         # Contraseña: solo actualizar si se ingresó una nueva
         if datos['password']:
@@ -449,6 +564,7 @@ def usuario_editar(request, user_id):
             Acudiente.objects.filter(usuario=usuario).delete()
 
         messages.success(request, f'Usuario "{usuario.username}" actualizado correctamente.')
+        _notificar_usuario_cambio(usuario, es_nuevo=False, emisor=request.user)
         return usuarios_lista(request)
 
     ctx = _context_form_usuario(usuario=usuario)
@@ -861,11 +977,12 @@ def torneo_crear(request):
         if not all([nombre, categoria_id, fecha_inicio, fecha_fin]):
             messages.error(request, 'Completa todos los campos obligatorios.')
         else:
-            Torneo.objects.create(
+            torneo_obj = Torneo.objects.create(
                 nombre=nombre, categoria_id=categoria_id,
                 fecha_inicio=fecha_inicio, fecha_fin=fecha_fin,
                 lugar=lugar, descripcion=descripcion, estado=estado
             )
+            _notificar_torneo(torneo_obj, es_nuevo=True, emisor=request.user)
             messages.success(request, f'Torneo "{nombre}" creado correctamente.')
 
     return render(request, 'panel/torneos/form.html', {
@@ -888,6 +1005,7 @@ def torneo_editar(request, torneo_id):
         torneo.descripcion = request.POST.get('descripcion', '').strip()
         torneo.estado = request.POST.get('estado', torneo.estado)
         torneo.save()
+        _notificar_torneo(torneo, es_nuevo=False, emisor=request.user)
         messages.success(request, f'Torneo "{torneo.nombre}" actualizado.')
     return render(request, 'panel/torneos/form.html', {
         'titulo': 'Editar Torneo',

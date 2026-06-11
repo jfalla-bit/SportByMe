@@ -100,6 +100,17 @@
                                        placeholder="Pérez" value="{{ last_name|default:'' }}">
                             </div>
 
+                            <!-- Fecha de nacimiento -->
+                            <div class="col-12">
+                                <label class="form-label fw-semibold small">
+                                    <i class="fas fa-calendar-alt me-1 text-muted"></i>Fecha de nacimiento *
+                                </label>
+                                <input type="date" name="birth_date" class="form-control"
+                                       value="{{ birth_date|default:'' }}" required
+                                       max="{% now 'Y-m-d' %}">
+                                <div class="form-text">Necesaria para identificar si eres mayor o menor de edad.</div>
+                            </div>
+
                             <!-- Email -->
                             <div class="col-12">
                                 <label class="form-label fw-semibold small">
@@ -174,6 +185,32 @@
                                 </div>
                             </div>
                         </div>
+
+                            <!-- Política de tratamiento de datos -->
+                            <div class="col-12">
+                                <div class="border rounded p-3 bg-light">
+                                    <p class="fw-semibold small mb-2">
+                                        <i class="fas fa-shield-alt me-1 text-primary"></i>Política de Tratamiento de Datos Personales
+                                    </p>
+                                    <div style="max-height:120px;overflow-y:auto;font-size:0.78rem;color:#555" class="mb-2 pe-1">
+                                        <p>De conformidad con la <strong>Ley 1581 de 2012</strong> y el <strong>Decreto 1377 de 2013</strong> de Colombia, al registrarte autorizas al <strong>Sistema Deportivo</strong> a recolectar, almacenar y utilizar tus datos personales (nombre, correo electrónico, fecha de nacimiento, documento y teléfono) con las siguientes finalidades:</p>
+                                        <ul class="ps-3">
+                                            <li>Gestionar tu participación en actividades deportivas, entrenamientos, torneos y partidos.</li>
+                                            <li>Administrar pagos, cuotas e información financiera relacionada con tu actividad.</li>
+                                            <li>Enviar notificaciones sobre cambios, eventos y comunicados del sistema.</li>
+                                            <li>Generar reportes y estadísticas de rendimiento deportivo.</li>
+                                        </ul>
+                                        <p>Tus datos serán tratados con confidencialidad y no serán cedidos a terceros sin tu consentimiento, salvo obligación legal. Puedes ejercer tus derechos de acceso, corrección, supresión y revocación contactando al administrador del sistema.</p>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="acepta_politica"
+                                               id="acepta_politica" onchange="updateSubmitBtn()" required>
+                                        <label class="form-check-label small fw-semibold" for="acepta_politica">
+                                            He leído y acepto la política de tratamiento de datos personales. <span class="text-danger">*</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
 
                         <div class="d-grid mt-4">
                             <button type="submit" id="submitBtn" class="btn btn-signup btn-primary text-white" disabled>
@@ -255,11 +292,13 @@ function checkMatch() {
 }
 
 function updateSubmitBtn() {
-    const p1 = document.getElementById('password1').value;
-    const p2 = document.getElementById('password2').value;
+    const p1        = document.getElementById('password1').value;
+    const p2        = document.getElementById('password2').value;
+    const birthDate = document.querySelector('[name="birth_date"]').value;
+    const acepta    = document.getElementById('acepta_politica').checked;
     const allPassed = Object.values(criteria).every(c => c.test(p1));
     const matches   = p1 === p2 && p2 !== '';
-    document.getElementById('submitBtn').disabled = !(allPassed && matches);
+    document.getElementById('submitBtn').disabled = !(allPassed && matches && birthDate && acepta);
 }
 
 function togglePass(inputId, iconId) {

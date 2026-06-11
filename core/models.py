@@ -30,6 +30,17 @@ class UserModel(AbstractUser):
     def is_acudiente(self):
         return self.role == 'acudiente'
 
+    def es_mayor_de_edad(self):
+        if not self.birth_date:
+            return None
+        from django.utils import timezone
+        from datetime import date
+        hoy = timezone.now().date()
+        edad = hoy.year - self.birth_date.year - (
+            (hoy.month, hoy.day) < (self.birth_date.month, self.birth_date.day)
+        )
+        return edad >= 18
+
 
 class Categoria(models.Model):
     SUBCATEGORIA_CHOICES = [
