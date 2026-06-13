@@ -5,11 +5,11 @@ ENV PYTHONUNBUFFERED=1
 
 RUN apt-get update && apt-get install -y \
     gcc \
+    pkg-config \
+    libcairo2-dev \
     libpq-dev \
-    libcairo2 \
     libpango-1.0-0 \
     libpangocairo-1.0-0 \
-    
     libffi-dev \
     shared-mime-info \
     && rm -rf /var/lib/apt/lists/*
