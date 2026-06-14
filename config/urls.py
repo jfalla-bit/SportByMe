@@ -25,5 +25,6 @@ urlpatterns = [
     path('', include('core.urls')),
     path('payments/', include('payments.urls')),
     path('dashboard/', lambda request: redirect('/auth/login/'), name='root_redirect'),
+    path('inicio/', lambda request: redirect('/auth/login/'), name='inicio_redirect'),
 ]
 
