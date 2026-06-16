@@ -1,12 +1,14 @@
-FROM python:3.12-slim
+FROM python:3.12
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 RUN apt-get update && apt-get install -y \
     gcc \
+    pkg-config \
     libpq-dev \
     libcairo2 \
+    libcairo2-dev \
     libpango-1.0-0 \
     libpangocairo-1.0-0 \
     libffi-dev \
@@ -20,8 +22,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-RUN python manage.py collectstatic --noinput
-
 EXPOSE 8000
 
-CMD ["sh", "-c", "gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000}"]
+CMD ["sh", "-c", "python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8000}"]
