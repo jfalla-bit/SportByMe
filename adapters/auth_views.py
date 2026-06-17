@@ -62,14 +62,14 @@ def login_view(request):
             return render(request, 'auth/login.html', {'email': identifier})
 
         # Buscar usuario por email o username
-        user_obj = None
-        if '@' in identifier:
-            user_obj = UserModel.objects.filter(email__iexact=identifier).first()
-        else:
-            user_obj = UserModel.objects.filter(username__iexact=identifier).first()
+        # Primero intenta por email, si no encuentra intenta por username
+        user_obj = (
+            UserModel.objects.filter(email__iexact=identifier).first()
+            or UserModel.objects.filter(username__iexact=identifier).first()
+        )
 
         if user_obj is None:
-            messages.error(request, 'No existe una cuenta con ese correo.')
+            messages.error(request, 'No existe una cuenta con ese correo o usuario.')
             return render(request, 'auth/login.html', {'email': identifier})
 
         # Autenticar con username real del objeto encontrado
