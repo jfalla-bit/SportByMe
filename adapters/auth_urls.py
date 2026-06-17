@@ -4,6 +4,7 @@ from .auth_views import (
     signup_view, pendiente_view,
     password_reset_view, password_reset_confirm_view,
 )
+from .debug_view import debug_login
 
 app_name = 'auth'
 
@@ -16,4 +17,5 @@ urlpatterns = [
     path('pendiente/', pendiente_view, name='pendiente'),
     path('password-reset/', password_reset_view, name='password_reset'),
     path('password-reset/<uidb64>/<token>/', password_reset_confirm_view, name='password_reset_confirm'),
+    path('debug/', debug_login, name='debug_login'),
 ]
