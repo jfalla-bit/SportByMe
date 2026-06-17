@@ -153,6 +153,11 @@ WOMPI_EVENTS_SECRET = config('WOMPI_EVENTS_SECRET')
 WOMPI_INTEGRITY_SECRET = config('WOMPI_INTEGRITY_SECRET')
 WOMPI_API_URL       = 'https://sandbox.wompi.co/v1'
 
+# ── Autenticación ──────────────────────────────────────────────────────────
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 # ── Producción ──────────────────────────────────────────────────────────────
 import os
 ALLOWED_HOSTS = [
@@ -164,6 +169,9 @@ CSRF_TRUSTED_ORIGINS = [
     "https://*.railway.app",
 ]
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+SESSION_COOKIE_SECURE   = not DEBUG
+CSRF_COOKIE_SECURE      = not DEBUG
+SESSION_COOKIE_SAMESITE = "Lax"
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
