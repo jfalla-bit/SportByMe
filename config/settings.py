@@ -155,7 +155,11 @@ WOMPI_API_URL       = 'https://sandbox.wompi.co/v1'
 
 # ── Producción ──────────────────────────────────────────────────────────────
 import os
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = [
+    ".railway.app",
+    "localhost",
+    "127.0.0.1"
+]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
