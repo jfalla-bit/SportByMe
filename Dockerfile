@@ -25,4 +25,4 @@ COPY . .
 
 RUN python manage.py collectstatic --noinput
 
-CMD ["sh", "-c", "echo PORT=$PORT && gunicorn config.wsgi:application --bind 0.0.0.0:${PORT:-8080}"]
+CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]
