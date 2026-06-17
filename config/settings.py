@@ -160,6 +160,10 @@ ALLOWED_HOSTS = [
     "localhost",
     "127.0.0.1"
 ]
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.railway.app",
+]
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
