@@ -13,9 +13,9 @@ class Command(BaseCommand):
 
         if User.objects.filter(username=username).exists():
             user = User.objects.get(username=username)
-            # Forzar siempre password, role, is_superuser e is_staff
             user.set_password(password)
-            user.role        = 'administrador'
+            user.email        = email
+            user.role         = 'administrador'
             user.is_superuser = True
             user.is_staff     = True
             user.is_active    = True
