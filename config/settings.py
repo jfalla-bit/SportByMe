@@ -172,6 +172,9 @@ SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SESSION_COOKIE_SECURE   = not DEBUG
 CSRF_COOKIE_SECURE      = not DEBUG
 SESSION_COOKIE_SAMESITE = "Lax"
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_AGE      = 86400  # 24 horas
+SESSION_ENGINE          = 'django.contrib.sessions.backends.db'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 

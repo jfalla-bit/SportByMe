@@ -13,26 +13,16 @@ class Command(BaseCommand):
 
         if User.objects.filter(username=username).exists():
             user = User.objects.get(username=username)
-            # Asegurar que tenga role correcto aunque ya exista
-            changed = False
-            if user.role != 'administrador':
-                user.role = 'administrador'
-                changed = True
-            if not user.is_superuser:
-                user.is_superuser = True
-                changed = True
-            if not user.is_staff:
-                user.is_staff = True
-                changed = True
-            if changed:
-                user.save()
-                self.stdout.write(self.style.SUCCESS(
-                    f'Usuario "{username}" actualizado: role=administrador, is_superuser=True'
-                ))
-            else:
-                self.stdout.write(self.style.WARNING(
-                    f'Usuario "{username}" ya existe y está configurado correctamente.'
-                ))
+            # Forzar siempre password, role, is_superuser e is_staff
+            user.set_password(password)
+            user.role        = 'administrador'
+            user.is_superuser = True
+            user.is_staff     = True
+            user.is_active    = True
+            user.save()
+            self.stdout.write(self.style.SUCCESS(
+                f'Usuario "{username}" actualizado — password reseteado, role=administrador'
+            ))
             return
 
         User.objects.create_superuser(
