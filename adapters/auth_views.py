@@ -29,13 +29,9 @@ def _redirect_to(url):
 
 
 def render_redirect(url):
-    """Renderiza una página de redirección simple usando meta refresh"""
-    from django.http import HttpResponse
-    return HttpResponse(
-        f'<!DOCTYPE html><html><head>'
-        f'<meta http-equiv="refresh" content="0;url={url}">'
-        f'</head><body></body></html>'
-    )
+    """HTTP redirect real para garantizar que las cookies de sesión se envíen antes de navegar"""
+    from django.http import HttpResponseRedirect
+    return HttpResponseRedirect(url)
 
 
 # ─── LOGIN ──────────────────────────────────────────────────────────────────────
@@ -51,6 +47,8 @@ def login_view(request):
     """
     # Si ya está autenticado, redirigir a su dashboard
     if request.user.is_authenticated:
+        if request.user.is_superuser or request.user.role == 'administrador':
+            return render_redirect('/admin-dashboard/')
         url = ROLE_URLS.get(request.user.role, '/auth/login/')
         return render_redirect(url)
 
@@ -87,6 +85,11 @@ def login_view(request):
 
         # Login exitoso
         login(request, user)
+
+        # Superusuarios de Django (is_superuser=True) van siempre al dashboard de admin
+        if user.is_superuser or user.role == 'administrador':
+            return render_redirect('/admin-dashboard/')
+
         url = ROLE_URLS.get(user.role, '/auth/login/')
         return render_redirect(url)
 
@@ -210,6 +213,8 @@ def logout_view(request):
 @login_required
 def dashboard_view(request):
     """Redirige al dashboard según el rol del usuario"""
+    if request.user.is_superuser or request.user.role == 'administrador':
+        return render_redirect('/admin-dashboard/')
     url = ROLE_URLS.get(request.user.role, '/auth/login/')
     return render_redirect(url)
 
