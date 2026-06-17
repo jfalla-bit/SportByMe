@@ -208,6 +208,21 @@ def _notificar_pago(pago, accion, emisor):
             pass
 
 
+def home(request):
+    if not request.user.is_authenticated:
+        return render(request, 'auth/login.html')
+    role = request.user.role
+    if role == 'administrador':
+        return HttpResponseRedirect('/admin-dashboard/')
+    elif role == 'entrenador':
+        return HttpResponseRedirect('/entrenador-dashboard/')
+    elif role == 'deportista':
+        return HttpResponseRedirect('/deportista-dashboard/')
+    elif role == 'acudiente':
+        return HttpResponseRedirect('/acudiente-dashboard/')
+    return render(request, 'auth/login.html')
+
+
 def solo_admin(view_func):
     """Decorador que verifica que el usuario sea administrador"""
     def wrapper(request, *args, **kwargs):

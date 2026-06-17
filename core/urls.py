@@ -1,8 +1,7 @@
 from django.urls import path
 from . import views
-from django.http import HttpResponse
 urlpatterns = [
-    path('', lambda request: HttpResponse("Sistema SportByMe activo")),
+    path('', views.home, name='home'),
     # Dashboards por rol
     path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('entrenador-dashboard/', views.entrenador_dashboard, name='entrenador_dashboard'),
