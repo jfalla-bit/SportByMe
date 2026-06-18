@@ -21,7 +21,7 @@
         <a href="/entrenador/mis-equipos/" class="alert-link ms-2">Ir a mis equipos →</a>
     </div>
     {% else %}
-    <form method="post" id="form-pago">
+    <form method="post" action="." id="form-pago">
         {% csrf_token %}
         <div class="row g-3">
 
