@@ -147,6 +147,7 @@ EMAIL_USE_SSL       = False
 EMAIL_HOST_USER     = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL  = EMAIL_HOST_USER
+EMAIL_TIMEOUT       = 5
 
 # ── Wompi ──────────────────────────────────────────────────────────────────
 WOMPI_PUBLIC_KEY    = config('WOMPI_PUBLIC_KEY')

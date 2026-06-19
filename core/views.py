@@ -105,27 +105,30 @@ def _notificar_usuario_cambio(usuario, es_nuevo, emisor):
     """
     Notifica al usuario cuando su cuenta es creada o editada.
     """
-    accion  = 'creada' if es_nuevo else 'actualizada'
-    asunto  = f'Tu cuenta ha sido {accion}'
-    mensaje = (
-        f'Hola {usuario.get_full_name() or usuario.username},\n\n'
-        f'Tu cuenta ha sido {accion} en el sistema.\n\n'
-        f'Usuario:   {usuario.username}\n'
-        f'Rol:       {usuario.get_role_display()}\n'
-        f'Estado:    {"Activo" if usuario.is_active else "Inactivo"}'
-    )
-    Notificacion.objects.create(usuario=usuario, asunto=asunto, mensaje=mensaje, emisor=emisor)
-    if usuario.email and '@' in usuario.email:
-        try:
-            send_mail(
-                subject=asunto,
-                message=mensaje,
-                from_email=django_settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[usuario.email],
-                fail_silently=True,
-            )
-        except Exception:
-            pass
+    try:
+        accion  = 'creada' if es_nuevo else 'actualizada'
+        asunto  = f'Tu cuenta ha sido {accion}'
+        mensaje = (
+            f'Hola {usuario.get_full_name() or usuario.username},\n\n'
+            f'Tu cuenta ha sido {accion} en el sistema.\n\n'
+            f'Usuario:   {usuario.username}\n'
+            f'Rol:       {usuario.get_role_display()}\n'
+            f'Estado:    {"Activo" if usuario.is_active else "Inactivo"}'
+        )
+        Notificacion.objects.create(usuario=usuario, asunto=asunto, mensaje=mensaje, emisor=emisor)
+        if usuario.email and '@' in usuario.email:
+            try:
+                send_mail(
+                    subject=asunto,
+                    message=mensaje,
+                    from_email=django_settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[usuario.email],
+                    fail_silently=True,
+                )
+            except Exception:
+                pass
+    except Exception:
+        pass
 
 
 def _notificar_entrenamiento(entrenamiento, es_nuevo, emisor):

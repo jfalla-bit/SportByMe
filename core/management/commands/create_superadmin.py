@@ -19,6 +19,8 @@ class Command(BaseCommand):
             user.is_superuser = True
             user.is_staff     = True
             user.is_active    = True
+            if not user.documento:
+                user.documento = '0000000000'
             user.save()
             self.stdout.write(self.style.SUCCESS(
                 f'Usuario "{username}" actualizado — password reseteado, role=administrador'
@@ -30,6 +32,7 @@ class Command(BaseCommand):
             email=email,
             password=password,
             role='administrador',
+            documento='0000000000',
         )
         self.stdout.write(self.style.SUCCESS(
             f'Superadmin creado — username: {username} / password: {password}'
