@@ -507,6 +507,10 @@ def usuario_crear(request):
                 }
             )
 
+        # Si es entrenador, asignar al equipo seleccionado
+        if datos['role'] == 'entrenador' and datos['equipo_id']:
+            Equipo.objects.filter(id=datos['equipo_id']).update(entrenador=usuario)
+
         _notificar_usuario_cambio(usuario, es_nuevo=True, emisor=request.user)
         messages.success(request, f'Usuario creado correctamente. Username asignado: {username}')
         return usuarios_lista(request)
@@ -567,6 +571,14 @@ def usuario_editar(request, user_id):
         elif datos['role'] != 'deportista':
             # Si ya no es deportista, desvincular el perfil (sin eliminar)
             Jugador.objects.filter(usuario=usuario).update(equipo=None, activo=False)
+
+        # Sincronizar equipo para entrenador
+        if datos['role'] == 'entrenador':
+            if datos['equipo_id']:
+                Equipo.objects.filter(id=datos['equipo_id']).update(entrenador=usuario)
+            else:
+                # Si no se seleccionó equipo, desvincularlo de cualquier equipo que tuviera
+                Equipo.objects.filter(entrenador=usuario).update(entrenador=None)
 
         # Sincronizar perfil Acudiente
         if datos['role'] == 'acudiente' and datos.get('jugador_id'):
