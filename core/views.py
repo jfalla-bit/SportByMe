@@ -4789,6 +4789,7 @@ def solo_deportista(view_func):
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
             return render(request, 'auth/login.html')
+        request.user.refresh_from_db()
         if request.user.role != 'deportista':
             return HttpResponseForbidden("Sin permisos de deportista.")
         return view_func(request, *args, **kwargs)
