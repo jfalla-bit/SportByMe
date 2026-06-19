@@ -111,15 +111,24 @@
         </a>
 
         <div class="sidebar-section mt-2">Reportes</div>
-        <a href="/entrenador/reportes/estadisticas-rendimiento/" class="nav-link {% block nav_estadisticas_rendimiento %}{% endblock %}">
-            <i class="fas fa-chart-pie me-2"></i>Estad. Rendimiento
+        <!-- Estadísticas colapsable -->
+        <a href="#submenu-estadisticas" class="nav-link d-flex justify-content-between align-items-center"
+           data-bs-toggle="collapse"
+           aria-expanded="{% if nav_estadisticas_rendimiento or nav_estadisticas_asistencia or nav_estadisticas_partidos %}true{% else %}false{% endif %}">
+            <span><i class="fas fa-chart-line me-2"></i>Estadísticas</span>
+            <i class="fas fa-chevron-down" style="font-size:0.7rem"></i>
         </a>
-        <a href="/entrenador/reportes/estadisticas-asistencia/" class="nav-link {% block nav_estadisticas_asistencia %}{% endblock %}">
-            <i class="fas fa-clipboard-check me-2"></i>Estad. Asistencia
-        </a>
-        <a href="/entrenador/reportes/estadisticas-partidos/" class="nav-link {% block nav_estadisticas_partidos %}{% endblock %}">
-            <i class="fas fa-futbol me-2"></i>Estad. Partidos
-        </a>
+        <div class="collapse {% if nav_estadisticas_rendimiento or nav_estadisticas_asistencia or nav_estadisticas_partidos %}show{% endif %}" id="submenu-estadisticas">
+            <a href="/entrenador/reportes/estadisticas-rendimiento/" class="nav-link ps-4 {% block nav_estadisticas_rendimiento %}{% endblock %}" style="font-size:0.85rem">
+                <i class="fas fa-chart-pie me-2"></i>Rendimiento
+            </a>
+            <a href="/entrenador/reportes/estadisticas-asistencia/" class="nav-link ps-4 {% block nav_estadisticas_asistencia %}{% endblock %}" style="font-size:0.85rem">
+                <i class="fas fa-clipboard-check me-2"></i>Asistencia
+            </a>
+            <a href="/entrenador/reportes/estadisticas-partidos/" class="nav-link ps-4 {% block nav_estadisticas_partidos %}{% endblock %}" style="font-size:0.85rem">
+                <i class="fas fa-futbol me-2"></i>Partidos
+            </a>
+        </div>
         <a href="/entrenador/reportes/rendimiento/" class="nav-link {% block nav_reporte_rendimiento %}{% endblock %}">
             <i class="fas fa-chart-bar me-2"></i>Rep. Rendimiento
         </a>
