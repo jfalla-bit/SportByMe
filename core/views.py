@@ -257,7 +257,8 @@ def solo_admin(view_func):
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
             return render(request, 'auth/login.html')
-        if request.user.role != 'administrador':
+        request.user.refresh_from_db()
+        if request.user.role != 'administrador' and not request.user.is_superuser:
             return HttpResponseForbidden("Sin permisos de administrador.")
         return view_func(request, *args, **kwargs)
     return wrapper
@@ -267,6 +268,7 @@ def solo_entrenador(view_func):
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
             return render(request, 'auth/login.html')
+        request.user.refresh_from_db()
         if request.user.role != 'entrenador':
             return HttpResponseForbidden("Sin permisos de entrenador.")
         return view_func(request, *args, **kwargs)
