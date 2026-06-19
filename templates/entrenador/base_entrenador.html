@@ -151,18 +151,27 @@
             </a>
         </div>
 
-        <a href="/entrenador/mensajes/" class="nav-link {% block nav_mensajes %}{% endblock %}">
-            <i class="fas fa-envelope me-2"></i>Mensajes
+        <!-- Mensajes colapsable -->
+        <a href="#submenu-mensajes" class="nav-link d-flex justify-content-between align-items-center"
+           data-bs-toggle="collapse"
+           aria-expanded="{% if nav_mensajes or nav_mensajes_enviar or nav_mensajes_grupo or nav_mensajes_enviados %}true{% else %}false{% endif %}">
+            <span><i class="fas fa-envelope me-2"></i>Mensajes</span>
+            <i class="fas fa-chevron-down" style="font-size:0.7rem"></i>
         </a>
-        <a href="/entrenador/mensajes/enviar/" class="nav-link {% block nav_mensajes_enviar %}{% endblock %}">
-            <i class="fas fa-user-edit me-2"></i>Msg. Individual
-        </a>
-        <a href="/entrenador/mensajes/grupo/" class="nav-link {% block nav_mensajes_grupo %}{% endblock %}">
-            <i class="fas fa-users me-2"></i>Msg. Grupal
-        </a>
-        <a href="/entrenador/mensajes/enviados/" class="nav-link {% block nav_mensajes_enviados %}{% endblock %}">
-            <i class="fas fa-paper-plane me-2"></i>Msgs. Enviados
-        </a>
+        <div class="collapse {% if nav_mensajes or nav_mensajes_enviar or nav_mensajes_grupo or nav_mensajes_enviados %}show{% endif %}" id="submenu-mensajes">
+            <a href="/entrenador/mensajes/" class="nav-link ps-4 {% block nav_mensajes %}{% endblock %}" style="font-size:0.85rem">
+                <i class="fas fa-envelope me-2"></i>Mensajes
+            </a>
+            <a href="/entrenador/mensajes/enviar/" class="nav-link ps-4 {% block nav_mensajes_enviar %}{% endblock %}" style="font-size:0.85rem">
+                <i class="fas fa-user-edit me-2"></i>Individual
+            </a>
+            <a href="/entrenador/mensajes/grupo/" class="nav-link ps-4 {% block nav_mensajes_grupo %}{% endblock %}" style="font-size:0.85rem">
+                <i class="fas fa-users me-2"></i>Grupal
+            </a>
+            <a href="/entrenador/mensajes/enviados/" class="nav-link ps-4 {% block nav_mensajes_enviados %}{% endblock %}" style="font-size:0.85rem">
+                <i class="fas fa-paper-plane me-2"></i>Enviados
+            </a>
+        </div>
 
         <div class="sidebar-section mt-2">Cuenta</div>
         <a href="/auth/logout/" class="nav-link text-danger">
