@@ -32,14 +32,22 @@ def _notificar_partido(partido, es_nuevo, emisor):
     """
     Crea notificacion para deportistas del equipo cuando se crea/modifica un partido.
     """
+    try:
+        from datetime import date as _date, time as _time
+        fecha = partido.fecha if hasattr(partido.fecha, 'strftime') else _date.fromisoformat(str(partido.fecha))
+        hora  = partido.hora  if hasattr(partido.hora,  'strftime') else _time.fromisoformat(str(partido.hora))
+        fecha_str = fecha.strftime('%d/%m/%Y')
+        hora_str  = hora.strftime('%H:%M')
+    except Exception:
+        fecha_str = hora_str = ''
     accion  = 'programado' if es_nuevo else 'modificado'
     asunto  = f'Partido {accion}: {partido.equipo_propio.nombre} vs {partido.equipo_rival}'
     mensaje = (
         f'Se ha {accion} un partido.\n\n'
         f'Equipo:  {partido.equipo_propio.nombre}\n'
         f'Rival:   {partido.equipo_rival}\n'
-        f'Fecha:   {partido.fecha.strftime("%d/%m/%Y")}\n'
-        f'Hora:    {partido.hora.strftime("%H:%M")}\n'
+        f'Fecha:   {fecha_str}\n'
+        f'Hora:    {hora_str}\n'
         f'Lugar:   {partido.cancha or "Por confirmar"}'
     )
     jugadores = Jugador.objects.filter(
@@ -68,14 +76,22 @@ def _notificar_torneo(torneo, es_nuevo, emisor):
     """
     Notifica a todos los deportistas activos cuando se crea/modifica un torneo.
     """
+    try:
+        from datetime import date as _date
+        fi = torneo.fecha_inicio if hasattr(torneo.fecha_inicio, 'strftime') else _date.fromisoformat(str(torneo.fecha_inicio))
+        ff = torneo.fecha_fin    if hasattr(torneo.fecha_fin,    'strftime') else _date.fromisoformat(str(torneo.fecha_fin))
+        fi_str = fi.strftime('%d/%m/%Y')
+        ff_str = ff.strftime('%d/%m/%Y')
+    except Exception:
+        fi_str = ff_str = ''
     accion  = 'creado' if es_nuevo else 'modificado'
     asunto  = f'Torneo {accion}: {torneo.nombre}'
     mensaje = (
         f'Se ha {accion} un torneo.\n\n'
         f'Nombre:     {torneo.nombre}\n'
         f'Categoría:  {torneo.categoria.nombre}\n'
-        f'Inicio:     {torneo.fecha_inicio.strftime("%d/%m/%Y")}\n'
-        f'Fin:        {torneo.fecha_fin.strftime("%d/%m/%Y")}\n'
+        f'Inicio:     {fi_str}\n'
+        f'Fin:        {ff_str}\n'
         f'Estado:     {torneo.get_estado_display()}\n'
         f'Lugar:      {torneo.lugar or "Por confirmar"}'
     )
@@ -136,13 +152,23 @@ def _notificar_entrenamiento(entrenamiento, es_nuevo, emisor):
     Crea una Notificacion para cada deportista activo del equipo
     e intenta enviar correo cuando se crea o modifica un entrenamiento.
     """
+    try:
+        from datetime import date as _date, time as _time
+        fecha = entrenamiento.fecha       if hasattr(entrenamiento.fecha,       'strftime') else _date.fromisoformat(str(entrenamiento.fecha))
+        hi    = entrenamiento.hora_inicio if hasattr(entrenamiento.hora_inicio, 'strftime') else _time.fromisoformat(str(entrenamiento.hora_inicio))
+        hf    = entrenamiento.hora_fin    if hasattr(entrenamiento.hora_fin,    'strftime') else _time.fromisoformat(str(entrenamiento.hora_fin))
+        fecha_str = fecha.strftime('%d/%m/%Y')
+        hi_str    = hi.strftime('%H:%M')
+        hf_str    = hf.strftime('%H:%M')
+    except Exception:
+        fecha_str = hi_str = hf_str = ''
     accion  = 'programado' if es_nuevo else 'modificado'
     asunto  = f'Entrenamiento {accion}: {entrenamiento.titulo}'
     mensaje = (
         f'Se ha {accion} un entrenamiento.\n\n'
         f'Título:     {entrenamiento.titulo}\n'
-        f'Fecha:      {entrenamiento.fecha.strftime("%d/%m/%Y")}\n'
-        f'Horario:    {entrenamiento.hora_inicio.strftime("%H:%M")} – {entrenamiento.hora_fin.strftime("%H:%M")}\n'
+        f'Fecha:      {fecha_str}\n'
+        f'Horario:    {hi_str} – {hf_str}\n'
         f'Lugar:      {entrenamiento.lugar or "Por confirmar"}\n'
         f'Equipo:     {entrenamiento.equipo.nombre}'
     )
