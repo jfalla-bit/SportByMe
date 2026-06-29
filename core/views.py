@@ -2850,11 +2850,6 @@ def admin_enviar_correo(request):
         error_smtp = None
         if emails:
             try:
-                connection = get_connection(
-                    backend='django.core.mail.backends.smtp.EmailBackend',
-                    fail_silently=False,
-                )
-                connection.open()
                 for email in emails:
                     try:
                         send_mail(
@@ -2862,13 +2857,11 @@ def admin_enviar_correo(request):
                             message=mensaje,
                             from_email=django_settings.DEFAULT_FROM_EMAIL,
                             recipient_list=[email],
-                            connection=connection,
-                            fail_silently=False,
+                            fail_silently=True,
                         )
                         enviados += 1
                     except Exception:
                         pass
-                connection.close()
             except Exception as e:
                 error_smtp = str(e)
 
